@@ -1,14 +1,14 @@
-package org.cloudbus.cloudsim.examples.power.random;
-
-import java.util.Calendar;
+package org.cloudbus.cloudsim.examples.power.planetlab;
 
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.examples.power.Helper;
 import org.cloudbus.cloudsim.examples.power.RunnerAbstract;
 
+import java.util.Calendar;
+
 /**
- * The example runner for the random workload.
+ * The example runner for the PlanetLab workload.
  * 
  * If you are using any algorithms, policies or workload included in the power package please cite
  * the following paper:
@@ -21,19 +21,21 @@ import org.cloudbus.cloudsim.examples.power.RunnerAbstract;
  * @author Anton Beloglazov
  * @since Jan 5, 2012
  */
-public class RandomRunner extends RunnerAbstract {
+public class PonaszkiRunner extends RunnerAbstract {
 
 	/**
-	 * @param enableOutput
-	 * @param outputToFile
-	 * @param inputFolder
-	 * @param outputFolder
-	 * @param workload
-	 * @param vmAllocationPolicy
-	 * @param vmSelectionPolicy
-	 * @param parameter
+	 * Instantiates a new planet lab runner.
+	 *
+	 * @param enableOutput the enable output
+	 * @param outputToFile the output to file
+	 * @param inputFolder the input folder
+	 * @param outputFolder the output folder
+	 * @param workload the workload
+	 * @param vmAllocationPolicy the vm allocation policy
+	 * @param vmSelectionPolicy the vm selection policy
+	 * @param parameter the parameter
 	 */
-	public RandomRunner(
+	public PonaszkiRunner(
 			boolean enableOutput,
 			boolean outputToFile,
 			String inputFolder,
@@ -55,10 +57,6 @@ public class RandomRunner extends RunnerAbstract {
 				parameter);
 	}
 
-	public RandomRunner(boolean enableOutput, boolean outputToFile, String inputFolder, String outputFolder, String workload, String vmAllocationPolicy, String vmSelectionPolicy, String parameter) {
-		super(enableOutput, outputToFile, inputFolder, outputFolder, workload, vmAllocationPolicy, vmSelectionPolicy, null, parameter);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -72,9 +70,9 @@ public class RandomRunner extends RunnerAbstract {
 			broker = Helper.createBroker();
 			int brokerId = broker.getId();
 
-			cloudletList = RandomHelper.createCloudletList(brokerId, RandomConstants.NUMBER_OF_VMS);
+			cloudletList = PlanetLabHelper.createCloudletListPlanetLab(brokerId, inputFolder);
 			vmList = Helper.createVmList(brokerId, cloudletList.size());
-			hostList = Helper.createHostList(RandomConstants.NUMBER_OF_HOSTS);
+			hostList = Helper.createHostList(PlanetLabConstants.NUMBER_OF_HOSTS);
 		} catch (Exception e) {
 			e.printStackTrace();
 			Log.printLine("The simulation has been terminated due to an unexpected error");

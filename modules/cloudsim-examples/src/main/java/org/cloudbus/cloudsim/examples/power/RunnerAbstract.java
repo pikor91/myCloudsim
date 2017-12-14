@@ -14,12 +14,7 @@ import org.cloudbus.cloudsim.VmAllocationPolicy;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.PowerDatacenter;
 import org.cloudbus.cloudsim.power.PowerHost;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicyMigrationAbstract;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicyMigrationInterQuartileRange;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicyMigrationLocalRegression;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicyMigrationLocalRegressionRobust;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicyMigrationMedianAbsoluteDeviation;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicyMigrationStaticThreshold;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.*;
 import org.cloudbus.cloudsim.power.PowerVmAllocationPolicySimple;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicyMaximumCorrelation;
@@ -77,6 +72,7 @@ public abstract class RunnerAbstract {
 			String workload,
 			String vmAllocationPolicy,
 			String vmSelectionPolicy,
+			String vmReallocationPolicy,
 			String parameter) {
 		try {
 			initLogOutput(
@@ -96,7 +92,7 @@ public abstract class RunnerAbstract {
 		start(
 				getExperimentName(workload, vmAllocationPolicy, vmSelectionPolicy, parameter),
 				outputFolder,
-				getVmAllocationPolicy(vmAllocationPolicy, vmSelectionPolicy, parameter));
+				getVmAllocationPolicy(vmAllocationPolicy, vmSelectionPolicy, vmReallocationPolicy, parameter));
 	}
 
 	/**
@@ -225,6 +221,7 @@ public abstract class RunnerAbstract {
 	protected VmAllocationPolicy getVmAllocationPolicy(
 			String vmAllocationPolicyName,
 			String vmSelectionPolicyName,
+			String vmReallocationPolicyName,
 			String parameterName) {
 		VmAllocationPolicy vmAllocationPolicy = null;
 		PowerVmSelectionPolicy vmSelectionPolicy = null;
@@ -235,6 +232,7 @@ public abstract class RunnerAbstract {
 		if (!parameterName.isEmpty()) {
 			parameter = Double.valueOf(parameterName);
 		}
+
 		if (vmAllocationPolicyName.equals("iqr")) {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
@@ -278,10 +276,48 @@ public abstract class RunnerAbstract {
 					Constants.SCHEDULING_INTERVAL,
 					fallbackVmSelectionPolicy);
 		} else if (vmAllocationPolicyName.equals("thr")) {
-			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
-					hostList,
-					vmSelectionPolicy,
-					parameter);
+			vmAllocationPolicy = null;
+			if(vmReallocationPolicyName == null || vmReallocationPolicyName.isEmpty()) {
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "stp".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyStripping(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "pck".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyPacking(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "rr".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRoundRobin(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "lbCpuRatio".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyLoadBalancingCpuFreeRatio(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "wpc".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCore(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "cpc".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyCostPerCore(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "bfd".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyBestFitDecreasing(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}
 		} else if (vmAllocationPolicyName.equals("dvfs")) {
 			vmAllocationPolicy = new PowerVmAllocationPolicySimple(hostList);
 		} else {
