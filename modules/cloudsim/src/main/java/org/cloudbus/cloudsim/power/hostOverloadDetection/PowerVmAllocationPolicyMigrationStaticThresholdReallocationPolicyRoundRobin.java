@@ -10,6 +10,7 @@ package org.cloudbus.cloudsim.power.hostOverloadDetection;
 
 import com.google.common.collect.Iterators;
 import org.cloudbus.cloudsim.Host;
+import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
@@ -69,11 +70,19 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRo
 
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
+
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
 		List<PowerHost> hostList = this.<PowerHost>getHostList();
+
 		PowerHost host;
+		int count = 0;
 		while ((host = getNextHost()) != null) {
+			if(count>=hostList.size()){
+				break;
+			}
+			count++;
+
 			if (excludedHosts.contains(host)) {
 				continue;
 			}
@@ -87,12 +96,14 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRo
 					if (powerAfterAllocation != -1) {
 						double powerDiff = powerAfterAllocation - host.getPower();
 						allocatedHost = host;
-						return allocatedHost;
-
+						break;
 					}
 				} catch (Exception e) {
 				}
+			}else{
+				Log.print("Host is not suitable for vm");
 			}
+
 		}
 		return allocatedHost;
 	}

@@ -1,9 +1,11 @@
-package org.cloudbus.cloudsim.examples.power.planetlab;
+package org.cloudbus.cloudsim.examples.power.ponaszki;
 
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.examples.power.Helper;
 import org.cloudbus.cloudsim.examples.power.RunnerAbstract;
+import org.cloudbus.cloudsim.examples.power.planetlab.PlanetLabConstants;
+import org.cloudbus.cloudsim.examples.power.planetlab.PlanetLabHelper;
 
 import java.util.Calendar;
 

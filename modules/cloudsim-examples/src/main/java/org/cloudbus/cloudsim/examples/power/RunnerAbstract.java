@@ -293,6 +293,7 @@ public abstract class RunnerAbstract {
 						vmSelectionPolicy,
 						parameter);
 			}else if(vmReallocationPolicyName!= null && "rr".equals(vmReallocationPolicyName)){
+				Log.print("thr rr choosed");
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRoundRobin(
 						hostList,
 						vmSelectionPolicy,
