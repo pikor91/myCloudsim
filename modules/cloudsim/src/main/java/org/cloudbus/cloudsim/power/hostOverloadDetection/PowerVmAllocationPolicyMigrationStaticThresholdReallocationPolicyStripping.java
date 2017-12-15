@@ -55,31 +55,6 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicySt
 		setUtilizationThreshold(utilizationThreshold);
 	}
 
-	/**
-	 * Checks if a host is over utilized, based on CPU usage.
-	 * 
-	 * @param host the host
-	 * @return true, if the host is over utilized; false otherwise
-	 */
-	@Override
-	public boolean isHostOverUtilized(PowerHost host) {
-		addHistoryEntry(host, getUtilizationThreshold());
-		double totalRequestedMips = 0;
-		for (Vm vm : host.getVmList()) {
-			totalRequestedMips += vm.getCurrentRequestedTotalMips();
-		}
-		double utilization = totalRequestedMips / host.getTotalMips();
-		return utilization > getUtilizationThreshold();
-	}
-
-	/**
-	 * Sets the utilization threshold.
-	 * 
-	 * @param utilizationThreshold the new utilization threshold
-	 */
-	protected void setUtilizationThreshold(double utilizationThreshold) {
-		this.utilizationThreshold = utilizationThreshold;
-	}
 
 	/**
 	 * Gets the utilization threshold.
@@ -92,6 +67,31 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicySt
 
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
-		return super.findHostForVm(vm, excludedHosts);
+		int minimalVmPerHost = Integer.MAX_VALUE;
+		PowerHost allocatedHost = null;
+		for(PowerHost host : this.<PowerHost>getHostList()){
+			if(excludedHosts.contains(host)){
+				continue;
+			}
+			if(host.isSuitableForVm(vm)){
+				if (getUtilizationOfCpuMips(host) != 0 && isHostOverUtilizedAfterAllocation(host, vm)) {
+					continue;
+				}
+
+				try {
+					int numberOfVmsInCurrentHost = host.getVmList().size();
+					if (numberOfVmsInCurrentHost >= -1) {
+						if(numberOfVmsInCurrentHost < minimalVmPerHost){
+							minimalVmPerHost = numberOfVmsInCurrentHost;
+							allocatedHost = host;
+						}
+					}
+				} catch (Exception e) {
+				}
+			}else{
+
+			}
+		}
+		return allocatedHost;
 	}
 }
