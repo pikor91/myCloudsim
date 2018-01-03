@@ -16,10 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.cloudbus.cloudsim.Host;
-import org.cloudbus.cloudsim.HostDynamicWorkload;
-import org.cloudbus.cloudsim.Log;
-import org.cloudbus.cloudsim.Vm;
+import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.*;
 import org.cloudbus.cloudsim.power.lists.PowerVmList;
@@ -96,6 +93,11 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	private final List<Double> executionTimeHistoryTotal = new LinkedList<Double>();
 
 	/**
+	 * The migration history entries, each entry describes one migration
+	 */
+	private final List<VmMigrationHistoryEntry> vmMigrationHistoryEntryList = new LinkedList<>();
+
+	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationAbstract.
 	 * 
 	 * @param hostList the host list
@@ -146,7 +148,18 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 
 		getExecutionTimeHistoryTotal().add(ExecutionTimeMeasurer.end("optimizeAllocationTotal"));
 
+		addVmMigrationHistoryEntrries(migrationMap);
 		return migrationMap;
+	}
+
+	private void addVmMigrationHistoryEntrries(List<Map<String, Object>> migrationMap) {
+		double currentTime = CloudSim.clock();
+		for(Map<String,Object> migration : migrationMap){
+			Vm vm= (Vm)migration.get("vm");
+			PowerHost newHost = (PowerHost) migration.get("host");
+			PowerHost oldHost = (PowerHost) vm.getHost();
+			vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, oldHost.getId(), newHost.getId(), vm.getId()));
+		}
 	}
 
 	/**
@@ -697,6 +710,11 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 */
 	public List<Double> getExecutionTimeHistoryTotal() {
 		return executionTimeHistoryTotal;
+	}
+
+
+	public List<VmMigrationHistoryEntry> getVmMigrationHistoryEntryList() {
+		return vmMigrationHistoryEntryList;
 	}
 
 }

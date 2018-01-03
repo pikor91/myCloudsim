@@ -109,7 +109,7 @@ public class PowerDatacenter extends Datacenter {
 									targetHost.getId());
 						} else {
 							Log.formatLine(
-									"%.2f: Migration of VM #%d from Host #%d to Host #%d is started",
+									"%.2f: Migration of VM #%d from Host #%d to Host #%d is started ",
 									currentTime,
 									vm.getId(),
 									oldHost.getId(),
@@ -141,6 +141,7 @@ public class PowerDatacenter extends Datacenter {
 			setLastProcessTime(currentTime);
 		}
 	}
+
 
 	/**
 	 * Update cloudet processing without scheduling future events.

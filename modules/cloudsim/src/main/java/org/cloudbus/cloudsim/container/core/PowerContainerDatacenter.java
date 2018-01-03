@@ -134,7 +134,7 @@ public class PowerContainerDatacenter extends ContainerDatacenter {
 
                         if (oldHost == null) {
                             Log.formatLine(
-                                    "%.2f: Migration of VM #%d to Host #%d is started",
+                                    "%.2f: Migration of VM #%d from Host NULL to Host #%d is started",
                                     currentTime,
                                     vm.getId(),
                                     targetHost.getId());
@@ -168,7 +168,7 @@ public class PowerContainerDatacenter extends ContainerDatacenter {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                }
-//                Log.printConcatLine(CloudSim.clock(),": The total number of Migrations is:  ",getVmMigrationCount());
+                Log.printConcatLine(CloudSim.clock(),": The total number of Migrations is:  ",getVmMigrationCount());
             }
 
             // schedules an event to the next time

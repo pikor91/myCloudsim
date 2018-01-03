@@ -19,7 +19,7 @@ import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G5Xe
 public class Constants {
 
 	public final static boolean ENABLE_OUTPUT = true;
-	public final static boolean OUTPUT_CSV    = false;
+	public final static boolean OUTPUT_CSV    = true;
 
 	public final static double SCHEDULING_INTERVAL = 300;
 	public final static double SIMULATION_LIMIT = 24 * 60 * 60;
@@ -61,5 +61,8 @@ public class Constants {
 		new PowerModelSpecPowerHpProLiantMl110G4Xeon3040(),
 		new PowerModelSpecPowerHpProLiantMl110G5Xeon3075()
 	};
+	public final static String SRC_HOST_KEY = "src_host";
+	public final static String DEST_HOST_KEY = "dest_host";
+	public final static String VM_KEY = "vm";
 
 }
