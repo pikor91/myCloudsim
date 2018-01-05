@@ -18,6 +18,7 @@ import org.cloudbus.cloudsim.container.schedulers.ContainerCloudletSchedulerDyna
 import org.cloudbus.cloudsim.container.schedulers.ContainerSchedulerTimeSharedOverSubscription;
 import org.cloudbus.cloudsim.container.schedulers.ContainerVmSchedulerTimeSharedOverSubscription;
 import org.cloudbus.cloudsim.container.utils.IDs;
+import org.cloudbus.cloudsim.examples.power.Constants;
 import org.cloudbus.cloudsim.util.MathUtil;
 
 import java.io.*;
@@ -30,7 +31,6 @@ import java.util.*;
  */
 
 public class HelperEx {
-
     public HelperEx() {
 //        System.out.print();
 
@@ -809,10 +809,12 @@ public class HelperEx {
                 List<Double> timeData = vmAllocationPolicy.getTimeHistory().get(host.getId());
                 List<Double> utilizationData = vmAllocationPolicy.getUtilizationHistory().get(host.getId());
                 List<Double> metricData = vmAllocationPolicy.getMetricHistory().get(host.getId());
-
+                if(Constants.ENABLE_CSV_HEADERS){
+                    writer.write("time(s);utilisation(0-1);utilisation_threshold(0-1)");
+                }
                 for (int i = 0; i < timeData.size(); i++) {
                     writer.write(String.format(
-                            "%.2f,%.2f,%.2f\n",
+                            "%.2f;%.2f;%.2f\n",
                             timeData.get(i),
                             utilizationData.get(i),
                             metricData.get(i)));

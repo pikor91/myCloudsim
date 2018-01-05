@@ -10,6 +10,7 @@ package org.cloudbus.cloudsim.power;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.DatacenterCharacteristics;
@@ -51,6 +52,7 @@ public class PowerDatacenter extends Datacenter {
 
 	/** The VM migration count. */
 	private int migrationCount;
+	private Map<Double, Double> timeFramesPowers = new TreeMap<>();
 
 	/**
 	 * Instantiates a new PowerDatacenter.
@@ -228,7 +230,7 @@ public class PowerDatacenter extends Datacenter {
 		}
 
 		setPower(getPower() + timeFrameDatacenterEnergy);
-
+		addTimeFramePower(currentTime, timeFrameDatacenterEnergy);
 		checkCloudletCompletion();
 
 		/** Remove completed VMs **/
@@ -244,6 +246,15 @@ public class PowerDatacenter extends Datacenter {
 
 		setLastProcessTime(currentTime);
 		return minTime;
+	}
+
+	private void addTimeFramePower(double currentTime, double timeFrameDatacenterEnergy) {
+		Double powerInThisFrame = timeFramesPowers.get(new Double(currentTime));
+		if(powerInThisFrame == null){
+			timeFramesPowers.put(new Double(currentTime), new Double(timeFrameDatacenterEnergy));
+		}else {
+			timeFramesPowers.put(new Double(currentTime), new Double(powerInThisFrame + timeFrameDatacenterEnergy));
+		}
 	}
 
 	@Override

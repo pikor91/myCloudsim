@@ -121,7 +121,7 @@ public class MathUtil {
 		for (Double number : list) {
 			sum += number;
 		}
-		return sum / list.size();
+		return list.size() !=0 ? sum / list.size() : 0;
 	}
 
 	/**

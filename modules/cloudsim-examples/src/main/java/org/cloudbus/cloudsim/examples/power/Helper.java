@@ -5,12 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.CloudletSchedulerDynamicWorkload;
@@ -312,6 +307,14 @@ public class Helper {
 			if (!folder4.exists()) {
 				folder4.mkdir();
 			}
+			File folder5 = new File(outputFolder + "/hosts");
+			if (!folder5.exists()) {
+				folder5.mkdir();
+			}
+			File folder6 = new File(outputFolder + "/sla");
+			if (!folder6.exists()) {
+				folder6.mkdir();
+			}
 
 			StringBuilder data = new StringBuilder();
 			String delimeter = ",";
@@ -369,6 +372,8 @@ public class Helper {
 
 				writeMetricHistory(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
 						+ "_metric");
+				writeAverageUtilisation(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
+						+ "_avg_utilisation_time_tetric");
 			}
 
 			data.append("\n");
@@ -379,6 +384,8 @@ public class Helper {
 			writeDataColumn(timeBeforeVmMigration, outputFolder + "/time_before_vm_migration/"
 					+ experimentName + "_time_before_vm_migration.csv");
 
+			writeNumberOfActiveHosts(hosts, outputFolder+"/hosts/"+experimentName+"_activeHosts");
+			writeVmsStateHisotry(vms, outputFolder + "/sla/" + experimentName + "_metrics");
 		} else {
 			Log.setDisabled(false);
 			Log.printLine();
@@ -462,6 +469,81 @@ public class Helper {
 
 		Log.setDisabled(true);
 	}
+
+	private static void writeVmsStateHisotry(List<Vm> vms, String outputPath) {
+		Map<Integer, Map<Double, Double>> slaViolations = getSlaViolations(vms);
+
+		for(Map.Entry<Integer, Map<Double, Double>> entry : slaViolations.entrySet()){
+			String filePath = outputPath +"_vm_" + entry.getKey()+ ".csv";
+			String headers = "vm_id;time;violation_percentage\n";
+
+			Map<Double, Double> vmSlaViolations = entry.getValue();
+			List<String> rows = convertToRowList(vmSlaViolations);
+
+			writeDataRows(rows, filePath, headers);
+
+		}
+	}
+
+	private static List<String> convertToRowList(Map<Double, Double> vmSlaViolations) {
+			List<String> rows = new LinkedList<>();
+		for (Map.Entry<Double, Double> entry :
+				vmSlaViolations.entrySet()) {
+			rows.add(String.format("%.2f;%.2f\n", entry.getKey(), entry.getValue()));
+		}
+		return rows;
+	}
+
+	private static void writeAverageUtilisation(List<? extends Host> hosts, PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
+
+		try {
+			File file = new File(outputPath + ".csv");
+
+				file.createNewFile();
+
+			BufferedWriter writer = null;
+				writer = new BufferedWriter(new FileWriter(file));
+				if(Constants.ENABLE_CSV_HEADERS){
+					writer.write("time;avg_utilisation;\n");
+				}
+
+
+			Map<Double, List<Double>> utilisationList = new TreeMap<>();// map key is time
+			for (Host host : hosts) {
+
+				if (!vmAllocationPolicy.getTimeHistory().containsKey(host.getId())) {
+					continue;
+				}
+				List<Double> timeData = vmAllocationPolicy.getTimeHistory().get(host.getId());
+				List<Double> utilizationData = vmAllocationPolicy.getUtilizationHistory().get(host.getId());
+
+				for (int i = 0; i < timeData.size(); i++) {
+					Double time = timeData.get(i);
+					Double utilisation = utilizationData.get(i);
+
+					List<Double> utilisationsInMoment = utilisationList.get(time);
+					if(utilisationsInMoment == null){
+						utilisationList.put(new Double(time),new LinkedList<Double>());
+					}
+
+					if(utilisation != 0.0) {
+						utilisationList.get(time).add(utilisation);
+					}
+				}
+			}
+
+			for(Map.Entry<Double, List<Double>> entry : utilisationList.entrySet() ){
+				Double time = entry.getKey();
+				List<Double> utilisationsInTime = entry.getValue();
+				double mean = MathUtil.mean(utilisationsInTime);
+				writer.write(String.format("%.2f;%.4f\n", time, mean));
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	/**
 	 * Parses the experiment name.
@@ -617,6 +699,56 @@ public class Helper {
 		return metrics;
 	}
 
+
+
+	protected static Map<Integer, Map<Double, Double> > getSlaViolations(List<Vm> vms) {
+//		Map<String, Double> metrics = new HashMap<String, Double>();
+		Map<Integer, Map<Double, Double> > slaViolation = new TreeMap<>();
+		double totalAllocated = 0;
+		double totalRequested = 0;
+		double totalUnderAllocatedDueToMigration = 0;
+
+		for (Vm vm : vms) {
+			double vmTotalAllocated = 0;
+			double vmTotalRequested = 0;
+			double vmUnderAllocatedDueToMigration = 0;
+			double previousTime = -1;
+			double previousAllocated = 0;
+			double previousRequested = 0;
+			boolean previousIsInMigration = false;
+
+			for (VmStateHistoryEntry entry : vm.getStateHistory()) {
+				if (previousTime != -1) {
+					double timeDiff = entry.getTime() - previousTime;
+					vmTotalAllocated += previousAllocated * timeDiff;
+					vmTotalRequested += previousRequested * timeDiff;
+
+					if (previousAllocated < previousRequested) {
+						if(slaViolation.get(vm.getId()) == null){
+							slaViolation.put(vm.getId(), new TreeMap<>());
+						}
+						slaViolation.get(vm.getId()).put(previousTime, (previousRequested - previousAllocated) / previousRequested);
+						if (previousIsInMigration) {
+							vmUnderAllocatedDueToMigration += (previousRequested - previousAllocated)
+									* timeDiff;
+						}
+					}
+				}
+
+				previousAllocated = entry.getAllocatedMips();
+				previousRequested = entry.getRequestedMips();
+				previousTime = entry.getTime();
+				previousIsInMigration = entry.isInMigration();
+			}
+
+			totalAllocated += vmTotalAllocated;
+			totalRequested += vmTotalRequested;
+			totalUnderAllocatedDueToMigration += vmUnderAllocatedDueToMigration;
+		}
+
+
+		return slaViolation;
+	}
 	/**
 	 * Write data column.
 	 * 
@@ -667,6 +799,29 @@ public class Helper {
 		}
 	}
 
+	public static void writeDataRows(List<String> data, String outputPath, String headers) {
+		File file = new File(outputPath);
+		try {
+			file.createNewFile();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			System.exit(0);
+		}
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			if(Constants.ENABLE_CSV_HEADERS && headers != null){
+				writer.write(headers);
+			}
+			for(String row : data) {
+				writer.write(row);
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}
+
 	/**
 	 * Write metric history.
 	 * 
@@ -678,9 +833,11 @@ public class Helper {
 			List<? extends Host> hosts,
 			PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy,
 			String outputPath) {
-		// for (Host host : hosts) {
-		for (int j = 0; j < 10; j++) {
-			Host host = hosts.get(j);
+		Map<Double, List<Double>> utilisationList = new HashMap<Double, List<Double>>();
+
+		for (Host host : hosts) {
+//		for (int j = 0; j < 10; j++) {
+//			Host host = hosts.get(j);
 
 			if (!vmAllocationPolicy.getTimeHistory().containsKey(host.getId())) {
 				continue;
@@ -698,6 +855,10 @@ public class Helper {
 				List<Double> utilizationData = vmAllocationPolicy.getUtilizationHistory().get(host.getId());
 				List<Double> metricData = vmAllocationPolicy.getMetricHistory().get(host.getId());
 
+				if(Constants.ENABLE_CSV_HEADERS){
+					writer.write("time(s);utilisation(0-1);utilisation_threshold(0-1)");
+				}
+
 				for (int i = 0; i < timeData.size(); i++) {
 					writer.write(String.format(
 							"%.2f,%.2f,%.2f\n",
@@ -705,6 +866,36 @@ public class Helper {
 							utilizationData.get(i),
 							metricData.get(i)));
 				}
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
+		}
+	}
+
+
+	private static void writeNumberOfActiveHosts(List<? extends Host> hosts, String outputPath) {
+		for(Host host : hosts) {
+			String pathWithExtension = outputPath + "_" + host.getId() + ".csv";
+			File file = new File(pathWithExtension);
+			try {
+				file.createNewFile();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(0);
+			}
+			try {
+				BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+				HostDynamicWorkload hdw = (HostDynamicWorkload) host;
+				List<HostStateHistoryEntry> stateHistory = hdw.getStateHistory();
+				List<String> rowlist = new LinkedList<>();
+
+				for(HostStateHistoryEntry entry : stateHistory){
+					rowlist.add(String.format("%.2f;%s\n", entry.getTime(), entry.isActive()==true?"1":"0"));
+				}
+				writeDataRows(rowlist, pathWithExtension, "time;number_of_active_hosts");
+
 				writer.close();
 			} catch (IOException e) {
 				e.printStackTrace();
