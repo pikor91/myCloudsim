@@ -379,7 +379,7 @@ public class Helper {
 					+ experimentName + "_time_before_vm_migration.csv");
 
 //			writeNumberOfActiveHosts(hosts, outputFolder+"/hosts/"+experimentName+"_activeHosts");
-			writeVmsStateHisotry(vms, outputFolder + "/sla/" + experimentName + "_metrics");
+//			writeVmsStateHisotry(vms, outputFolder + "/sla/" + experimentName + "_metrics");
 		} else {
 			Log.setDisabled(false);
 			Log.printLine();
