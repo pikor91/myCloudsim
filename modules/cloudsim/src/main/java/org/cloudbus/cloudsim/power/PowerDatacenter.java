@@ -52,6 +52,9 @@ public class PowerDatacenter extends Datacenter {
 
 	/** The VM migration count. */
 	private int migrationCount;
+
+
+	/** added by ponaszki */
 	private Map<Double, Double> timeFramesPowers = new TreeMap<>();
 
 	/**
@@ -368,4 +371,11 @@ public class PowerDatacenter extends Datacenter {
 		setMigrationCount(getMigrationCount() + 1);
 	}
 
+	/**
+	 * added by ponaszki
+	 * @return
+	 */
+	public Map<Double, Double> getTimeFramesPowers() {
+		return timeFramesPowers;
+	}
 }

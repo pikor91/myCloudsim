@@ -93,9 +93,21 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	private final List<Double> executionTimeHistoryTotal = new LinkedList<Double>();
 
 	/**
+	 * added by ponaszki
 	 * The migration history entries, each entry describes one migration
 	 */
 	private final List<VmMigrationHistoryEntry> vmMigrationHistoryEntryList = new LinkedList<>();
+
+
+	/**
+	 * added by ponaszki
+	 */
+	private LinkedList<Double> activeHostsTime = new LinkedList<>();
+
+	/**
+	 * added by ponaszki
+	 */
+	private LinkedList<Integer> activeHostsNumber = new LinkedList<>();
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationAbstract.
@@ -172,6 +184,9 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 			List<PowerHostUtilizationHistory> overUtilizedHosts) {
 		List<Map<String, Object>> migrationMap = new LinkedList<Map<String, Object>>();
 		List<PowerHost> switchedOffHosts = getSwitchedOffHosts();
+
+		activeHostsTime.add(CloudSim.clock());
+		activeHostsNumber.add(getHostList().size()-switchedOffHosts.size());
 
 		// over-utilized hosts + hosts that are selected to migrate VMs to from over-utilized hosts
 		Set<PowerHost> excludedHostsForFindingUnderUtilizedHost = new HashSet<PowerHost>();
@@ -717,4 +732,11 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		return vmMigrationHistoryEntryList;
 	}
 
+	public LinkedList<Double> getActiveHostsTime() {
+		return activeHostsTime;
+	}
+
+	public LinkedList<Integer> getActiveHostsNumber() {
+		return activeHostsNumber;
+	}
 }

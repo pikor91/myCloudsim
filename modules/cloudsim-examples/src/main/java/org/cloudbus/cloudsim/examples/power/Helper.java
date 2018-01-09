@@ -7,21 +7,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 
-import org.cloudbus.cloudsim.Cloudlet;
-import org.cloudbus.cloudsim.CloudletSchedulerDynamicWorkload;
-import org.cloudbus.cloudsim.Datacenter;
-import org.cloudbus.cloudsim.DatacenterBroker;
-import org.cloudbus.cloudsim.DatacenterCharacteristics;
-import org.cloudbus.cloudsim.Host;
-import org.cloudbus.cloudsim.HostDynamicWorkload;
-import org.cloudbus.cloudsim.HostStateHistoryEntry;
-import org.cloudbus.cloudsim.Log;
-import org.cloudbus.cloudsim.Pe;
-import org.cloudbus.cloudsim.Storage;
-import org.cloudbus.cloudsim.Vm;
-import org.cloudbus.cloudsim.VmAllocationPolicy;
-import org.cloudbus.cloudsim.VmSchedulerTimeSharedOverSubscription;
-import org.cloudbus.cloudsim.VmStateHistoryEntry;
+import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.power.PowerDatacenter;
 import org.cloudbus.cloudsim.power.PowerDatacenterBroker;
 import org.cloudbus.cloudsim.power.PowerHost;
@@ -315,6 +301,10 @@ public class Helper {
 			if (!folder6.exists()) {
 				folder6.mkdir();
 			}
+            File folder7 = new File(outputFolder + "/power");
+            if (!folder7.exists()) {
+                folder7.mkdir();
+            }
 
 			StringBuilder data = new StringBuilder();
 			String delimeter = ",";
@@ -373,7 +363,11 @@ public class Helper {
 				writeMetricHistory(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
 						+ "_metric");
 				writeAverageUtilisation(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
-						+ "_avg_utilisation_time_tetric");
+						+ "_avg_utilisation_time_metric");
+				writeActiveHostNumber(vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
+						+ "_number_of_active_hosts");
+				writeVmMigrationsInTime(vmAllocationPolicy, outputFolder + "/metrics/" + experimentName+"_num_of_vm_migrations");
+				writePowerUsageInTime(((PowerDatacenter)datacenter).getTimeFramesPowers(), outputFolder + "/power/" + experimentName+"_power_in_time");
 			}
 
 			data.append("\n");
@@ -470,6 +464,83 @@ public class Helper {
 		Log.setDisabled(true);
 	}
 
+    private static void writePowerUsageInTime(Map<Double, Double> timeFramesPowers, String outputPath) {
+        List<String> lines = new ArrayList<>();
+        List<String> lines_incremental = new ArrayList<>();
+        double power_sum = 0.0;
+        for(Map.Entry<Double, Double> entry : timeFramesPowers.entrySet()){
+            Double time = entry.getKey();
+            Double power = entry.getValue();
+            power_sum = power_sum + power;
+            lines.add(String.format("%.2f;%.4f\n", time, power));
+            lines_incremental.add(String.format("%.2f;%.4f\n", time, power_sum));
+        }
+
+        writeDataRows(lines, outputPath + ".csv", "time;power\n");
+        writeDataRows(lines_incremental, outputPath+"_cum.csv", "time;power_cum\n");
+    }
+
+    private static void writeVmMigrationsInTime(PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
+
+	    List<VmMigrationHistoryEntry> migrations = vmAllocationPolicy.getVmMigrationHistoryEntryList();
+        Collections.sort(migrations, new Comparator<VmMigrationHistoryEntry>() {
+            @Override
+            public int compare(VmMigrationHistoryEntry o1, VmMigrationHistoryEntry o2) {
+                if(o1.getMigrationTime() < o2.getMigrationTime())
+                    return -1;
+                else if(o1.getMigrationTime() > o2.getMigrationTime())
+                    return 1;
+                else
+                    return 0;
+            }
+        });
+        Map<Double, Integer> migrationDiagram = new TreeMap<>();
+	    LinkedList<String> lines = new LinkedList<>();
+	    int counter = 0;
+	    for(int i = 0; i < migrations.size(); i++){
+            int vmId = migrations.get(i).getVmId();
+            int sourceHost = migrations.get(i).getSourceHost();
+            int destinationHost = migrations.get(i).getDestinationHost();
+            double migrationTime = migrations.get(i).getMigrationTime();
+            lines.add(String.format("%.2f;%d;%d;%d\n", migrationTime, sourceHost, destinationHost, vmId));
+            if(migrationDiagram.get(migrationTime) == null){
+                migrationDiagram.put(migrationTime, 1);
+            }else{
+                migrationDiagram.put(migrationTime, migrationDiagram.get(migrationTime)+1);
+            }
+        }
+
+        Map<Double, Integer> migrationDiagram2 = new TreeMap<>();
+        LinkedList<String> lines2 = new LinkedList<>();
+        LinkedList<String> lines3 = new LinkedList<>();
+        int sum = 0;
+        for( Map.Entry<Double, Integer> entry : migrationDiagram.entrySet()){
+            Double time = entry.getKey();
+            Integer num_of_migrations = entry.getValue();
+            sum =sum + num_of_migrations.intValue();
+            migrationDiagram2.put(time, sum);
+            lines2.add(String.format("%.2f;%d\n", time, sum));
+            lines3.add(String.format("%.2f;%d\n", time, num_of_migrations));
+
+        }
+
+        writeDataRows(lines, outputPath + ".csv", "migration_time;src_host;dest_host;vm_id\n");
+        writeDataRows(lines2, outputPath+"_cum" + ".csv", "migration_time;num_of_mig_cum\n");
+        writeDataRows(lines3, outputPath + ".csv", "migration_time;num_of_mig\n");
+
+    }
+
+    private static void writeActiveHostNumber(PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
+		LinkedList<Double> activeHostsTime = vmAllocationPolicy.getActiveHostsTime();
+        LinkedList<Integer> activeHostsNumber = vmAllocationPolicy.getActiveHostsNumber();
+        LinkedList<String> lines = new LinkedList<>();
+        for(int i = 0; i < activeHostsTime.size(); i++){
+		    lines.add(String.format("%.2f;%d\n", activeHostsTime.get(i), activeHostsNumber.get(i)));
+        }
+
+        writeDataRows(lines, outputPath+".csv", "time;num_of_active_hosts\n");
+	}
+
 	private static void writeVmsStateHisotry(List<Vm> vms, String outputPath) {
 		Map<Integer, Map<Double, Double>> slaViolations = getSlaViolations(vms);
 
@@ -478,18 +549,19 @@ public class Helper {
 			String headers = "vm_id;time;violation_percentage\n";
 
 			Map<Double, Double> vmSlaViolations = entry.getValue();
-			List<String> rows = convertToRowList(vmSlaViolations);
+			int vmId = entry.getKey();
+			List<String> rows = convertToRowList(vmSlaViolations, vmId);
 
 			writeDataRows(rows, filePath, headers);
 
 		}
 	}
 
-	private static List<String> convertToRowList(Map<Double, Double> vmSlaViolations) {
+	private static List<String> convertToRowList(Map<Double, Double> vmSlaViolations, int vmId) {
 			List<String> rows = new LinkedList<>();
 		for (Map.Entry<Double, Double> entry :
 				vmSlaViolations.entrySet()) {
-			rows.add(String.format("%.2f;%.2f\n", entry.getKey(), entry.getValue()));
+			rows.add(String.format("%d;%.2f;%2f\n", vmId, entry.getKey(), entry.getValue()));
 		}
 		return rows;
 	}
@@ -504,7 +576,7 @@ public class Helper {
 			BufferedWriter writer = null;
 				writer = new BufferedWriter(new FileWriter(file));
 				if(Constants.ENABLE_CSV_HEADERS){
-					writer.write("time;avg_utilisation;\n");
+					writer.write("time;avg_utilisation\n");
 				}
 
 
@@ -732,6 +804,11 @@ public class Helper {
 							vmUnderAllocatedDueToMigration += (previousRequested - previousAllocated)
 									* timeDiff;
 						}
+					}else{
+						if(slaViolation.get(vm.getId()) == null){
+							slaViolation.put(vm.getId(), new TreeMap<>());
+						}
+						slaViolation.get(vm.getId()).put(previousTime, 0.0);
 					}
 				}
 
@@ -872,6 +949,7 @@ public class Helper {
 				System.exit(0);
 			}
 		}
+
 	}
 
 
@@ -902,6 +980,8 @@ public class Helper {
 				System.exit(0);
 			}
 		}
+
+
 	}
 
 	/**
