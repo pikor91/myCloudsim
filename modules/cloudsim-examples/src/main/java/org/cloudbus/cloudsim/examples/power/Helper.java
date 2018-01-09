@@ -305,6 +305,10 @@ public class Helper {
             if (!folder7.exists()) {
                 folder7.mkdir();
             }
+            File folder8 = new File(outputFolder + "/pictures");
+            if (!folder8.exists()) {
+                folder8.mkdir();
+            }
 
 			StringBuilder data = new StringBuilder();
 			String delimeter = ",";
