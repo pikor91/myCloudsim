@@ -360,8 +360,8 @@ public class Helper {
 				data.append(String.format("%.5f", executionTimeTotalMean) + delimeter);
 				data.append(String.format("%.5f", executionTimeTotalStDev) + delimeter);
 
-				writeMetricHistory(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
-						+ "_metric");
+//				writeMetricHistory(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
+//						+ "_metric");
 				writeAverageUtilisation(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
 						+ "_avg_utilisation_time_metric");
 				writeActiveHostNumber(vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
@@ -378,7 +378,7 @@ public class Helper {
 			writeDataColumn(timeBeforeVmMigration, outputFolder + "/time_before_vm_migration/"
 					+ experimentName + "_time_before_vm_migration.csv");
 
-			writeNumberOfActiveHosts(hosts, outputFolder+"/hosts/"+experimentName+"_activeHosts");
+//			writeNumberOfActiveHosts(hosts, outputFolder+"/hosts/"+experimentName+"_activeHosts");
 			writeVmsStateHisotry(vms, outputFolder + "/sla/" + experimentName + "_metrics");
 		} else {
 			Log.setDisabled(false);
@@ -467,13 +467,14 @@ public class Helper {
     private static void writePowerUsageInTime(Map<Double, Double> timeFramesPowers, String outputPath) {
         List<String> lines = new ArrayList<>();
         List<String> lines_incremental = new ArrayList<>();
-        double power_sum = 0.0;
+        double power_sum_kWh = 0.0;
         for(Map.Entry<Double, Double> entry : timeFramesPowers.entrySet()){
             Double time = entry.getKey();
             Double power = entry.getValue();
-            power_sum = power_sum + power;
-            lines.add(String.format("%.2f;%.4f\n", time, power));
-            lines_incremental.add(String.format("%.2f;%.4f\n", time, power_sum));
+            double power_kWh = power / (3600*1000);
+            power_sum_kWh = power_sum_kWh + power_kWh;
+            lines.add(String.format("%.2f;%.4f\n", time, power_kWh));
+            lines_incremental.add(String.format("%.2f;%.4f\n", time, power_sum_kWh));
         }
 
         writeDataRows(lines, outputPath + ".csv", "time;power\n");
@@ -933,7 +934,7 @@ public class Helper {
 				List<Double> metricData = vmAllocationPolicy.getMetricHistory().get(host.getId());
 
 				if(Constants.ENABLE_CSV_HEADERS){
-					writer.write("time(s);utilisation(0-1);utilisation_threshold(0-1)");
+					writer.write("time(s);utilisation(0-1);utilisation_threshold(0-1)\n");
 				}
 
 				for (int i = 0; i < timeData.size(); i++) {
@@ -972,7 +973,7 @@ public class Helper {
 				for(HostStateHistoryEntry entry : stateHistory){
 					rowlist.add(String.format("%.2f;%s\n", entry.getTime(), entry.isActive()==true?"1":"0"));
 				}
-				writeDataRows(rowlist, pathWithExtension, "time;number_of_active_hosts");
+				writeDataRows(rowlist, pathWithExtension, "time;is_host_active\n");
 
 				writer.close();
 			} catch (IOException e) {

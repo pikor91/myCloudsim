@@ -90,7 +90,7 @@ public abstract class RunnerAbstract {
 
 		init(inputFolder + "/" + workload);
 		start(
-				getExperimentName(workload, vmAllocationPolicy, vmSelectionPolicy, parameter),
+				getExperimentName(workload, vmAllocationPolicy, vmSelectionPolicy,vmReallocationPolicy, parameter),
 				outputFolder,
 				getVmAllocationPolicy(vmAllocationPolicy, vmSelectionPolicy, vmReallocationPolicy, parameter));
 	}
