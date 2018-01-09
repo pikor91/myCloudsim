@@ -503,11 +503,17 @@ public class Helper {
             int sourceHost = migrations.get(i).getSourceHost();
             int destinationHost = migrations.get(i).getDestinationHost();
             double migrationTime = migrations.get(i).getMigrationTime();
-            lines.add(String.format("%.2f;%d;%d;%d\n", migrationTime, sourceHost, destinationHost, vmId));
-            if(migrationDiagram.get(migrationTime) == null){
-                migrationDiagram.put(migrationTime, 1);
-            }else{
-                migrationDiagram.put(migrationTime, migrationDiagram.get(migrationTime)+1);
+            if (sourceHost != -1) {
+                lines.add(String.format("%.2f;%d;%d;%d\n", migrationTime, sourceHost, destinationHost, vmId));
+                if(migrationDiagram.get(migrationTime) == null){
+                    migrationDiagram.put(migrationTime, 1);
+                }else{
+                    migrationDiagram.put(migrationTime, migrationDiagram.get(migrationTime)+1);
+                }
+            }else {
+                if(migrationDiagram.get(migrationTime) == null){
+                    migrationDiagram.put(migrationTime, 0);
+                }
             }
         }
 

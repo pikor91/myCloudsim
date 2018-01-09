@@ -166,11 +166,15 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 
 	private void addVmMigrationHistoryEntrries(List<Map<String, Object>> migrationMap) {
 		double currentTime = CloudSim.clock();
-		for(Map<String,Object> migration : migrationMap){
-			Vm vm= (Vm)migration.get("vm");
-			PowerHost newHost = (PowerHost) migration.get("host");
-			PowerHost oldHost = (PowerHost) vm.getHost();
-			vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, oldHost.getId(), newHost.getId(), vm.getId()));
+		if(migrationMap != null && migrationMap.size()>0) {
+			for (Map<String, Object> migration : migrationMap) {
+				Vm vm = (Vm) migration.get("vm");
+				PowerHost newHost = (PowerHost) migration.get("host");
+				PowerHost oldHost = (PowerHost) vm.getHost();
+				vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, oldHost.getId(), newHost.getId(), vm.getId()));
+			}
+		}else{
+			vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, -1,-1, -1));
 		}
 	}
 
