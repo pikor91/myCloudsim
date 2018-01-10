@@ -18,7 +18,7 @@ public class ThrMcCpc {
 		boolean outputToFile = false;
 		String inputFolder = NonPowerAware.class.getClassLoader().getResource("workload/planetlab").getPath();
 		String outputFolder = "output";
-		String workload = "ponaszki"; // PlanetLab workload
+		String workload = "20110303"; // PlanetLab workload
 		String vmAllocationPolicy = "thr"; // Static Threshold (THR) VM allocation policy
 		String vmSelectionPolicy = "mc"; // Maximum Correlation (MC) VM selection policy
 		String vmReallocationPolicy = "cpc";
