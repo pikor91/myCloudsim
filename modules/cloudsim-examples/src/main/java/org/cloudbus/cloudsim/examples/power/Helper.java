@@ -8,6 +8,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import org.cloudbus.cloudsim.*;
+import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.PowerDatacenter;
 import org.cloudbus.cloudsim.power.PowerDatacenterBroker;
 import org.cloudbus.cloudsim.power.PowerHost;
@@ -471,6 +472,7 @@ public class Helper {
     private static void writePowerUsageInTime(Map<Double, Double> timeFramesPowers, String outputPath) {
         List<String> lines = new ArrayList<>();
         List<String> lines_incremental = new ArrayList<>();
+        List<String> lines_aggregated = new ArrayList<>();
         double power_sum_kWh = 0.0;
         for(Map.Entry<Double, Double> entry : timeFramesPowers.entrySet()){
             Double time = entry.getKey();
@@ -479,13 +481,42 @@ public class Helper {
             power_sum_kWh = power_sum_kWh + power_kWh;
             lines.add(String.format("%.2f;%.4f\n", time, power_kWh));
             lines_incremental.add(String.format("%.2f;%.4f\n", time, power_sum_kWh));
+
         }
 
-        writeDataRows(lines, outputPath + ".csv", "time;power\n");
+		lines_aggregated = writeInIntervals(timeFramesPowers);
+//        writeDataRows(lines, outputPath + ".csv", "time;power\n");
         writeDataRows(lines_incremental, outputPath+"_cum.csv", "time;power_cum\n");
+        writeDataRows(lines_aggregated, outputPath+".csv", "time;power\n");
     }
 
-    private static void writeVmMigrationsInTime(PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
+	private static List<String> writeInIntervals(Map<Double, Double> timeFramesPowers) {
+		Map<Double, Double> powers = new TreeMap<>();
+		for(double lt=0, et=299; et<90000; lt=lt+300, et=et+300){
+			for(Map.Entry<Double, Double> entry : timeFramesPowers.entrySet()) {
+				Double time = entry.getKey();
+				Double power = entry.getValue();
+				Double power_kwh = power / (3600 * 1000);
+				double key = lt;
+				if(time>lt && time <et){
+					if(powers.get(key) == null){
+						powers.put(key, power_kwh);
+					}else{
+						powers.put(key, powers.get(key)+power_kwh);
+					}
+				}
+
+			}
+		}
+		List<String> result = new ArrayList<>();
+		for(Map.Entry<Double, Double> entry : powers.entrySet()) {
+
+			result.add(String.format("%.2f;%.4f\n", entry.getKey(), entry.getValue()));
+		}
+		return result;
+	}
+
+	private static void writeVmMigrationsInTime(PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
 
 	    List<VmMigrationHistoryEntry> migrations = vmAllocationPolicy.getVmMigrationHistoryEntryList();
         Collections.sort(migrations, new Comparator<VmMigrationHistoryEntry>() {
