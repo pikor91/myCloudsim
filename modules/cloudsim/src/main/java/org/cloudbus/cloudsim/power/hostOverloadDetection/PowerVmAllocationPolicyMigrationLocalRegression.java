@@ -60,6 +60,18 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
          * data to be computed. */
 	private PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy;
 
+
+	public HostOverUtilisationProcessor getHostOverUtilisationProcessor() {
+		return hostOverUtilisationProcessor;
+	}
+
+	public void setHostOverUtilisationProcessor(HostOverUtilisationProcessor hostOverUtilisationProcessor) {
+		this.hostOverUtilisationProcessor = hostOverUtilisationProcessor;
+	}
+
+	private HostOverUtilisationProcessor hostOverUtilisationProcessor;
+
+
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationLocalRegression.
 	 * 
@@ -77,6 +89,7 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy,
 			double utilizationThreshold) {
 		super(hostList, vmSelectionPolicy);
+		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorLocalRegression(safetyParameter, schedulingInterval, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold, null)));
 		setSafetyParameter(safetyParameter);
 		setSchedulingInterval(schedulingInterval);
 		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
@@ -110,6 +123,7 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
 	 */
 	@Override
 	public boolean isHostOverUtilized(PowerHost host) {
+
 		PowerHostUtilizationHistory _host = (PowerHostUtilizationHistory) host;
 		double[] utilizationHistory = _host.getUtilizationHistory();
 		int length = 10; // we use 10 to make the regression responsive enough to latest values

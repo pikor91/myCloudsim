@@ -6,21 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import org.cloudbus.cloudsim.Cloudlet;
-import org.cloudbus.cloudsim.DatacenterBroker;
-import org.cloudbus.cloudsim.Log;
-import org.cloudbus.cloudsim.Vm;
-import org.cloudbus.cloudsim.VmAllocationPolicy;
+import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
-import org.cloudbus.cloudsim.power.PowerDatacenter;
-import org.cloudbus.cloudsim.power.PowerHost;
+import org.cloudbus.cloudsim.power.*;
 import org.cloudbus.cloudsim.power.hostOverloadDetection.*;
-import org.cloudbus.cloudsim.power.PowerVmAllocationPolicySimple;
-import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
-import org.cloudbus.cloudsim.power.PowerVmSelectionPolicyMaximumCorrelation;
-import org.cloudbus.cloudsim.power.PowerVmSelectionPolicyMinimumMigrationTime;
-import org.cloudbus.cloudsim.power.PowerVmSelectionPolicyMinimumUtilization;
-import org.cloudbus.cloudsim.power.PowerVmSelectionPolicyRandomSelection;
 
 /**
  * The Class RunnerAbstract.
@@ -226,7 +215,7 @@ public abstract class RunnerAbstract {
 		VmAllocationPolicy vmAllocationPolicy = null;
 		PowerVmSelectionPolicy vmSelectionPolicy = null;
 		if (!vmSelectionPolicyName.isEmpty()) {
-			vmSelectionPolicy = getVmSelectionPolicy(vmSelectionPolicyName);
+			vmSelectionPolicy = getVmSelectionPolicy(vmSelectionPolicyName, hostList);
 		}
 		double parameter = 0;
 		if (!parameterName.isEmpty()) {
@@ -332,9 +321,10 @@ public abstract class RunnerAbstract {
 	 * Gets the vm selection policy.
 	 * 
 	 * @param vmSelectionPolicyName the vm selection policy name
+	 * @param hostList
 	 * @return the vm selection policy
 	 */
-	protected PowerVmSelectionPolicy getVmSelectionPolicy(String vmSelectionPolicyName) {
+	protected PowerVmSelectionPolicy getVmSelectionPolicy(String vmSelectionPolicyName, List<? extends Host> hostList) {
 		PowerVmSelectionPolicy vmSelectionPolicy = null;
 		if (vmSelectionPolicyName.equals("mc")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyMaximumCorrelation(
@@ -345,7 +335,14 @@ public abstract class RunnerAbstract {
 			vmSelectionPolicy = new PowerVmSelectionPolicyMinimumUtilization();
 		} else if (vmSelectionPolicyName.equals("rs")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyRandomSelection();
-		} else {
+		} else if (vmSelectionPolicyName.equals("cuv")) {
+			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance(hostList);
+		} else if (vmSelectionPolicyName.equals("cls")) {
+			vmSelectionPolicy = new PowerVmSelectionPolicyClosestToThreshold();
+		} else if (vmSelectionPolicyName.equals("lfv")) {
+			vmSelectionPolicy = new PowerVmSelectionPolicyLargestVmFirst();
+		}
+		else {
 			System.out.println("Unknown VM selection policy: " + vmSelectionPolicyName);
 			System.exit(0);
 		}

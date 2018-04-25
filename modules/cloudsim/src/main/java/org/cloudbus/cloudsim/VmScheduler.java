@@ -146,6 +146,7 @@ public abstract class VmScheduler {
 		return allocated;
 	}
 
+
 	/**
 	 * Returns maximum available MIPS among all the host's PEs.
 	 * 

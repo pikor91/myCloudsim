@@ -39,6 +39,7 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
          * that can be changed when creating an instance of the class. */
 	private double utilizationThreshold = 0.9;
 
+	private HostOverUtilisationProcessor hostOverUtilisationProcessor;
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
 	 * 
@@ -49,9 +50,12 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 	public PowerVmAllocationPolicyMigrationStaticThreshold(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
+			double utilizationThreshold,
+			HostOverUtilisationProcessor hostOverUtilisationProcessor) {
 		super(hostList, vmSelectionPolicy);
 		setUtilizationThreshold(utilizationThreshold);
+		setHostOverUtilisationProcessor(hostOverUtilisationProcessor);
+		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold, null));
 	}
 
 	/**
@@ -62,13 +66,8 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 	 */
 	@Override
 	public boolean isHostOverUtilized(PowerHost host) {
-		addHistoryEntry(host, getUtilizationThreshold());
-		double totalRequestedMips = 0;
-		for (Vm vm : host.getVmList()) {
-			totalRequestedMips += vm.getCurrentRequestedTotalMips();
-		}
-		double utilization = totalRequestedMips / host.getTotalMips();
-		return utilization > getUtilizationThreshold();
+		boolean isHostOverUtilized = hostOverUtilisationProcessor.isHostOverUtilized(host, this);
+		return isHostOverUtilized;
 	}
 
 	/**
@@ -89,4 +88,8 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 		return utilizationThreshold;
 	}
 
+
+	public void setHostOverUtilisationProcessor(HostOverUtilisationProcessor hostOverUtilisationProcessor) {
+		this.hostOverUtilisationProcessor = hostOverUtilisationProcessor;
+	}
 }

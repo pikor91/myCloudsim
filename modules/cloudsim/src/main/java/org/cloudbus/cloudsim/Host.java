@@ -388,6 +388,21 @@ public class Host {
 	}
 
 	/**
+	 * Gets the total allocated MIPS for all VMs along all its PEs.
+	 *
+	 * @return the allocated mips for vm
+	 */
+	public double getTotalAllocatedMips() {
+		List<Vm> vmList = getVmList();
+		double totalAllocatedMips = 0.0;
+		for(Vm vm : vmList){
+			double totalAllocatedMipsForVm = getVmScheduler().getTotalAllocatedMipsForVm(vm);
+			totalAllocatedMips+=totalAllocatedMipsForVm;
+		}
+		return totalAllocatedMips;
+	}
+
+	/**
 	 * Returns the maximum available MIPS among all the PEs of the host.
 	 * 
 	 * @return max mips

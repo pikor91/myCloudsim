@@ -32,6 +32,7 @@ import org.cloudbus.cloudsim.Vm;
  */
 public abstract class PowerVmSelectionPolicy {
 
+
 	/**
 	 * Gets a VM to migrate from a given host.
 	 * 

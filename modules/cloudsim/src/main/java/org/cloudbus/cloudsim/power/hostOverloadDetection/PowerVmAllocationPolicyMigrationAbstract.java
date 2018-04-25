@@ -457,6 +457,21 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	}
 
 	/**
+	 * Gets the NOT over utilized hosts.
+	 *
+	 * @return the NOT over utilized hosts
+	 */
+	protected List<PowerHostUtilizationHistory> getNotOverUtilizedHosts() {
+		List<PowerHostUtilizationHistory> notOverUtilizedHosts = new LinkedList<PowerHostUtilizationHistory>();
+		for (PowerHostUtilizationHistory host : this.<PowerHostUtilizationHistory> getHostList()) {
+			if (!isHostOverUtilized(host)) {
+				notOverUtilizedHosts.add(host);
+			}
+		}
+		return notOverUtilizedHosts;
+	}
+
+	/**
 	 * Gets the switched off hosts.
 	 * 
 	 * @return the switched off hosts
