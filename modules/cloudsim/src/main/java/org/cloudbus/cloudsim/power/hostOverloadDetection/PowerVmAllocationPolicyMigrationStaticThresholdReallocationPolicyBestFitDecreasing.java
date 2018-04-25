@@ -63,13 +63,15 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyBe
 	 */
 	@Override
 	public boolean isHostOverUtilized(PowerHost host) {
-		addHistoryEntry(host, getUtilizationThreshold());
-		double totalRequestedMips = 0;
-		for (Vm vm : host.getVmList()) {
-			totalRequestedMips += vm.getCurrentRequestedTotalMips();
-		}
-		double utilization = totalRequestedMips / host.getTotalMips();
-		return utilization > getUtilizationThreshold();
+		boolean isHostOverUtilized = getHostOverUtilisationProcessor().isHostOverUtilized(host, this);
+		return isHostOverUtilized;
+//		addHistoryEntry(host, getUtilizationThreshold());
+//		double totalRequestedMips = 0;
+//		for (Vm vm : host.getVmList()) {
+//			totalRequestedMips += vm.getCurrentRequestedTotalMips();
+//		}
+//		double utilization = totalRequestedMips / host.getTotalMips();
+//		return utilization > getUtilizationThreshold();
 	}
 
 	/**

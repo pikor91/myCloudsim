@@ -39,6 +39,7 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
          * that can be changed when creating an instance of the class. */
 	private double utilizationThreshold = 0.9;
 
+
 	private HostOverUtilisationProcessor hostOverUtilisationProcessor;
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
@@ -50,12 +51,10 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 	public PowerVmAllocationPolicyMigrationStaticThreshold(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold,
-			HostOverUtilisationProcessor hostOverUtilisationProcessor) {
+			double utilizationThreshold) {
 		super(hostList, vmSelectionPolicy);
 		setUtilizationThreshold(utilizationThreshold);
-		setHostOverUtilisationProcessor(hostOverUtilisationProcessor);
-		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold, null));
+		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 	}
 
 	/**
@@ -92,4 +91,9 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 	public void setHostOverUtilisationProcessor(HostOverUtilisationProcessor hostOverUtilisationProcessor) {
 		this.hostOverUtilisationProcessor = hostOverUtilisationProcessor;
 	}
+
+	public HostOverUtilisationProcessor getHostOverUtilisationProcessor() {
+		return hostOverUtilisationProcessor;
+	}
+
 }

@@ -1,6 +1,5 @@
 package org.cloudbus.cloudsim.power.hostOverloadDetection;
 
-import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
 import org.cloudbus.cloudsim.power.PowerHostUtilizationHistory;
 import org.cloudbus.cloudsim.util.MathUtil;
@@ -8,7 +7,7 @@ import org.cloudbus.cloudsim.util.MathUtil;
 /**
  * Created by ponaszki on 2018-04-20.
  */
-public class HostOverUtilisationProcessorInterQuartileRange extends  HostOverUtilisationProcessor {
+public class HostOverUtilisationProcessorMedianAbsoluteDeviation extends  HostOverUtilisationProcessor {
 
     private double safetyParameter = 0.9;
 
@@ -19,15 +18,13 @@ public class HostOverUtilisationProcessorInterQuartileRange extends  HostOverUti
         return fallbackHostOverUtilisationProcessor;
     }
 
-    public HostOverUtilisationProcessorInterQuartileRange(double safetyParameter, HostOverUtilisationProcessor fallbackHostOverUtilisationProcessor){
+    public HostOverUtilisationProcessorMedianAbsoluteDeviation(double safetyParameter, HostOverUtilisationProcessor fallbackHostOverUtilisationProcessor){
         this.safetyParameter = safetyParameter;
         this.fallbackHostOverUtilisationProcessor = fallbackHostOverUtilisationProcessor;
     }
 
     public boolean isHostOverUtilized(PowerHost host, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract){
-        double upperThreshold = 0;
-
-        upperThreshold = getHostUtilizationThreshold(host);
+        double upperThreshold = getHostUtilizationThreshold(host);
         powerVmAllocationPolicyMigrationAbstract.addHistoryEntry(host, upperThreshold);
 
         double utilization = getCurrentUtilizationOfHost(host);
@@ -41,15 +38,14 @@ public class HostOverUtilisationProcessorInterQuartileRange extends  HostOverUti
      * @return the host CPU utilization percentage IQR
      */
     public double getHostUtilizationThreshold(PowerHost host) throws IllegalArgumentException {
-        double upperThreshold = 0;
         PowerHostUtilizationHistory _host = (PowerHostUtilizationHistory) host;
-        try {
-            upperThreshold = 1 - getSafetyParameter() * getHostUtilizationThreshold(_host);
-        } catch (IllegalArgumentException e) {
-            return getFallbackHostOverUtilisationProcessor().getHostUtilizationThreshold(host);
+        double[] data = _host.getUtilizationHistory();
+        if (MathUtil.countNonZeroBeginning(data) >= 12) { // 12 has been suggested as a safe value
+            return MathUtil.mad(data);
         }
-        return upperThreshold;
+        throw new IllegalArgumentException();
     }
+
 
     public double getSafetyParameter() {
         return safetyParameter;

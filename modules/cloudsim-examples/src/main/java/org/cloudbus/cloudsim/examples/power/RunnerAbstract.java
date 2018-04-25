@@ -214,8 +214,10 @@ public abstract class RunnerAbstract {
 			String parameterName) {
 		VmAllocationPolicy vmAllocationPolicy = null;
 		PowerVmSelectionPolicy vmSelectionPolicy = null;
+		double utilizationThreshold = 0.7;
+
 		if (!vmSelectionPolicyName.isEmpty()) {
-			vmSelectionPolicy = getVmSelectionPolicy(vmSelectionPolicyName, hostList);
+			vmSelectionPolicy = getVmSelectionPolicy(vmSelectionPolicyName, hostList, utilizationThreshold);
 		}
 		double parameter = 0;
 		if (!parameterName.isEmpty()) {
@@ -223,47 +225,57 @@ public abstract class RunnerAbstract {
 		}
 
 		if (vmAllocationPolicyName.equals("iqr")) {
+
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					0.7);
+					utilizationThreshold
+					);
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorInterQuartileRange(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationInterQuartileRange(
 					hostList,
 					vmSelectionPolicy,
 					parameter,
-					fallbackVmSelectionPolicy);
+					fallbackVmSelectionPolicy, hostOverUtilisationProcessor);
 		} else if (vmAllocationPolicyName.equals("mad")) {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					0.7);
+					utilizationThreshold);
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorMedianAbsoluteDeviation(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
+
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationMedianAbsoluteDeviation(
 					hostList,
 					vmSelectionPolicy,
 					parameter,
-					fallbackVmSelectionPolicy);
+					fallbackVmSelectionPolicy,
+					hostOverUtilisationProcessor);
 		} else if (vmAllocationPolicyName.equals("lr")) {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					0.7);
+					utilizationThreshold);
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegression(parameter, Constants.SCHEDULING_INTERVAL, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationLocalRegression(
 					hostList,
 					vmSelectionPolicy,
 					parameter,
 					Constants.SCHEDULING_INTERVAL,
-					fallbackVmSelectionPolicy);
+					fallbackVmSelectionPolicy,
+					hostOverUtilisationProcessor);
 		} else if (vmAllocationPolicyName.equals("lrr")) {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					0.7);
+					utilizationThreshold);
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegressionRobust(parameter, Constants.SCHEDULING_INTERVAL,  new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationLocalRegressionRobust(
 					hostList,
 					vmSelectionPolicy,
 					parameter,
 					Constants.SCHEDULING_INTERVAL,
-					fallbackVmSelectionPolicy);
+					fallbackVmSelectionPolicy,
+					hostOverUtilisationProcessor);
 		} else if (vmAllocationPolicyName.equals("thr")) {
 			vmAllocationPolicy = null;
 			if(vmReallocationPolicyName == null || vmReallocationPolicyName.isEmpty()) {
@@ -324,7 +336,7 @@ public abstract class RunnerAbstract {
 	 * @param hostList
 	 * @return the vm selection policy
 	 */
-	protected PowerVmSelectionPolicy getVmSelectionPolicy(String vmSelectionPolicyName, List<? extends Host> hostList) {
+	protected PowerVmSelectionPolicy getVmSelectionPolicy(String vmSelectionPolicyName, List<? extends Host> hostList, double threshold) {
 		PowerVmSelectionPolicy vmSelectionPolicy = null;
 		if (vmSelectionPolicyName.equals("mc")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyMaximumCorrelation(
@@ -336,7 +348,7 @@ public abstract class RunnerAbstract {
 		} else if (vmSelectionPolicyName.equals("rs")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyRandomSelection();
 		} else if (vmSelectionPolicyName.equals("cuv")) {
-			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance(hostList);
+			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance(hostList, new HostOverUtilisationProcessorStaticThreshold(threshold));
 		} else if (vmSelectionPolicyName.equals("cls")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyClosestToThreshold();
 		} else if (vmSelectionPolicyName.equals("lfv")) {

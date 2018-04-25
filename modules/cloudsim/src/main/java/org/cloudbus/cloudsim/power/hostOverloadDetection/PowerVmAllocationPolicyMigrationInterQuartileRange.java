@@ -57,23 +57,34 @@ public class PowerVmAllocationPolicyMigrationInterQuartileRange extends
          * data to be computed. */
 	private PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy;
 
+
+	public HostOverUtilisationProcessor getHostOverUtilizationProcessor() {
+		return hostOverUtilizationProcessor;
+	}
+
+	public void setHostOverUtilizationProcessor(HostOverUtilisationProcessor hostOverUtilizationProcessor) {
+		this.hostOverUtilizationProcessor = hostOverUtilizationProcessor;
+	}
+
+	private HostOverUtilisationProcessor hostOverUtilizationProcessor;
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationInterQuartileRange.
 	 * 
 	 * @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param safetyParameter the safety parameter
-	 * @param utilizationThreshold the utilization threshold
+	 * @param hostOverUtilisationProcessor the utilization threshold
 	 */
 	public PowerVmAllocationPolicyMigrationInterQuartileRange(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
 			double safetyParameter,
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy,
-			double utilizationThreshold) {
+			HostOverUtilisationProcessor hostOverUtilisationProcessor) {
 		super(hostList, vmSelectionPolicy);
 		setSafetyParameter(safetyParameter);
 		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
+		setHostOverUtilizationProcessor(hostOverUtilisationProcessor);
 	}
 
 	/**
@@ -83,15 +94,16 @@ public class PowerVmAllocationPolicyMigrationInterQuartileRange extends
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param safetyParameter the safety parameter
 	 */
-	public PowerVmAllocationPolicyMigrationInterQuartileRange(
-			List<? extends Host> hostList,
-			PowerVmSelectionPolicy vmSelectionPolicy,
-			double safetyParameter,
-			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy) {
-		super(hostList, vmSelectionPolicy);
-		setSafetyParameter(safetyParameter);
-		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
-	}
+//	public PowerVmAllocationPolicyMigrationInterQuartileRange(
+//			List<? extends Host> hostList,
+//			PowerVmSelectionPolicy vmSelectionPolicy,
+//			double safetyParameter,
+//			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy,
+//			HostOverUtilisationProcessor hostOverUtilisationProcessor) {
+//		super(hostList, vmSelectionPolicy);
+//		setSafetyParameter(safetyParameter);
+//		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
+//	}
 
 	/**
 	 * Checks if the host is over utilized, based on CPU utilization.

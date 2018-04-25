@@ -79,7 +79,7 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param schedulingInterval the scheduling interval
 	 * @param fallbackVmAllocationPolicy the fallback vm allocation policy
-	 * @param utilizationThreshold the utilization threshold
+	 * @param hostOverUtilisationProcessor the utilization threshold
 	 */
 	public PowerVmAllocationPolicyMigrationLocalRegression(
 			List<? extends Host> hostList,
@@ -87,9 +87,9 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
 			double safetyParameter,
 			double schedulingInterval,
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy,
-			double utilizationThreshold) {
+			HostOverUtilisationProcessor hostOverUtilisationProcessor) {
 		super(hostList, vmSelectionPolicy);
-		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorLocalRegression(safetyParameter, schedulingInterval, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold, null)));
+		setHostOverUtilisationProcessor(hostOverUtilisationProcessor);
 		setSafetyParameter(safetyParameter);
 		setSchedulingInterval(schedulingInterval);
 		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
@@ -103,17 +103,17 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
 	 * @param schedulingInterval the scheduling interval
 	 * @param fallbackVmAllocationPolicy the fallback vm allocation policy
 	 */
-	public PowerVmAllocationPolicyMigrationLocalRegression(
-			List<? extends Host> hostList,
-			PowerVmSelectionPolicy vmSelectionPolicy,
-			double safetyParameter,
-			double schedulingInterval,
-			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy) {
-		super(hostList, vmSelectionPolicy);
-		setSafetyParameter(safetyParameter);
-		setSchedulingInterval(schedulingInterval);
-		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
-	}
+//	public PowerVmAllocationPolicyMigrationLocalRegression(
+//			List<? extends Host> hostList,
+//			PowerVmSelectionPolicy vmSelectionPolicy,
+//			double safetyParameter,
+//			double schedulingInterval,
+//			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy) {
+//		super(hostList, vmSelectionPolicy);
+//		setSafetyParameter(safetyParameter);
+//		setSchedulingInterval(schedulingInterval);
+//		setFallbackVmAllocationPolicy(fallbackVmAllocationPolicy);
+//	}
 
 	/**
 	 * Checks if a host is over utilized.
@@ -123,30 +123,30 @@ public class PowerVmAllocationPolicyMigrationLocalRegression extends PowerVmAllo
 	 */
 	@Override
 	public boolean isHostOverUtilized(PowerHost host) {
-
-		PowerHostUtilizationHistory _host = (PowerHostUtilizationHistory) host;
-		double[] utilizationHistory = _host.getUtilizationHistory();
-		int length = 10; // we use 10 to make the regression responsive enough to latest values
-		if (utilizationHistory.length < length) {
-			return getFallbackVmAllocationPolicy().isHostOverUtilized(host);
-		}
-		double[] utilizationHistoryReversed = new double[length];
-		for (int i = 0; i < length; i++) {
-			utilizationHistoryReversed[i] = utilizationHistory[length - i - 1];
-		}
-		double[] estimates = null;
-		try {
-			estimates = getParameterEstimates(utilizationHistoryReversed);
-		} catch (IllegalArgumentException e) {
-			return getFallbackVmAllocationPolicy().isHostOverUtilized(host);
-		}
-		double migrationIntervals = Math.ceil(getMaximumVmMigrationTime(_host) / getSchedulingInterval());
-		double predictedUtilization = estimates[0] + estimates[1] * (length + migrationIntervals);
-		predictedUtilization *= getSafetyParameter();
-
-		addHistoryEntry(host, predictedUtilization);
-
-		return predictedUtilization >= 1;
+		return hostOverUtilisationProcessor.isHostOverUtilized(host, this);
+//		PowerHostUtilizationHistory _host = (PowerHostUtilizationHistory) host;
+//		double[] utilizationHistory = _host.getUtilizationHistory();
+//		int length = 10; // we use 10 to make the regression responsive enough to latest values
+//		if (utilizationHistory.length < length) {
+//			return getFallbackVmAllocationPolicy().isHostOverUtilized(host);
+//		}
+//		double[] utilizationHistoryReversed = new double[length];
+//		for (int i = 0; i < length; i++) {
+//			utilizationHistoryReversed[i] = utilizationHistory[length - i - 1];
+//		}
+//		double[] estimates = null;
+//		try {
+//			estimates = getParameterEstimates(utilizationHistoryReversed);
+//		} catch (IllegalArgumentException e) {
+//			return getFallbackVmAllocationPolicy().isHostOverUtilized(host);
+//		}
+//		double migrationIntervals = Math.ceil(getMaximumVmMigrationTime(_host) / getSchedulingInterval());
+//		double predictedUtilization = estimates[0] + estimates[1] * (length + migrationIntervals);
+//		predictedUtilization *= getSafetyParameter();
+//
+//		addHistoryEntry(host, predictedUtilization);
+//
+//		return predictedUtilization >= 1;
 	}
 
 	/**

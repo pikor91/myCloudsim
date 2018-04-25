@@ -51,14 +51,14 @@ public class PowerVmAllocationPolicyMigrationLocalRegressionRobust extends
 			double safetyParameter,
 			double schedulingInterval,
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy,
-			double utilizationThreshold) {
+			HostOverUtilisationProcessor hostOverUtilisationProcessor) {
 		super(
 				hostList,
 				vmSelectionPolicy,
 				safetyParameter,
 				schedulingInterval,
 				fallbackVmAllocationPolicy,
-				utilizationThreshold);
+				hostOverUtilisationProcessor);
 	}
 
 	/**
@@ -69,14 +69,16 @@ public class PowerVmAllocationPolicyMigrationLocalRegressionRobust extends
 	 * @param schedulingInterval the scheduling interval
 	 * @param fallbackVmAllocationPolicy the fallback vm allocation policy
 	 */
-	public PowerVmAllocationPolicyMigrationLocalRegressionRobust(
-			List<? extends Host> hostList,
-			PowerVmSelectionPolicy vmSelectionPolicy,
-			double safetyParameter,
-			double schedulingInterval,
-			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy) {
-		super(hostList, vmSelectionPolicy, safetyParameter, schedulingInterval, fallbackVmAllocationPolicy);
-	}
+//	public PowerVmAllocationPolicyMigrationLocalRegressionRobust(
+//			List<? extends Host> hostList,
+//			PowerVmSelectionPolicy vmSelectionPolicy,
+//			double safetyParameter,
+//			double schedulingInterval,
+//			PowerVmAllocationPolicyMigrationAbstract fallbackVmAllocationPolicy) {
+//		super(hostList, vmSelectionPolicy, safetyParameter, schedulingInterval, fallbackVmAllocationPolicy);
+//		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorLocalRegressionRobust(safetyParameter, schedulingInterval, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold, null)));
+//
+//	}
 
 	/**
 	 * Gets the utilization estimates.

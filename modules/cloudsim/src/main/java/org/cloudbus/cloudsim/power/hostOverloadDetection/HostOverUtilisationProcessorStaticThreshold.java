@@ -16,7 +16,7 @@ public class HostOverUtilisationProcessorStaticThreshold extends  HostOverUtilis
     private HostOverUtilisationProcessor fallbackHostOverUtilisationProcessor;
 
 
-    public HostOverUtilisationProcessorStaticThreshold(double utilizationThreshold, HostOverUtilisationProcessor fallbackHostOverUtilisationProcessor){
+    public HostOverUtilisationProcessorStaticThreshold(double utilizationThreshold){
         this.utilizationThreshold = utilizationThreshold;
         this.fallbackHostOverUtilisationProcessor = fallbackHostOverUtilisationProcessor;
     }
