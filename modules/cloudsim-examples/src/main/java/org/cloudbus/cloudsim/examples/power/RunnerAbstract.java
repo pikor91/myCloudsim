@@ -231,7 +231,7 @@ public abstract class RunnerAbstract {
 					vmSelectionPolicy,
 					utilizationThreshold
 					);
-			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorInterQuartileRange(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorInterQuartileRange(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationInterQuartileRange(
 					hostList,
 					vmSelectionPolicy,
@@ -242,7 +242,7 @@ public abstract class RunnerAbstract {
 					hostList,
 					vmSelectionPolicy,
 					utilizationThreshold);
-			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorMedianAbsoluteDeviation(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorMedianAbsoluteDeviation(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationMedianAbsoluteDeviation(
 					hostList,
@@ -255,7 +255,7 @@ public abstract class RunnerAbstract {
 					hostList,
 					vmSelectionPolicy,
 					utilizationThreshold);
-			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegression(parameter, Constants.SCHEDULING_INTERVAL, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegression(parameter, Constants.SCHEDULING_INTERVAL, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationLocalRegression(
 					hostList,
 					vmSelectionPolicy,
@@ -268,7 +268,7 @@ public abstract class RunnerAbstract {
 					hostList,
 					vmSelectionPolicy,
 					utilizationThreshold);
-			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegressionRobust(parameter, Constants.SCHEDULING_INTERVAL,  new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold))
+			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegressionRobust(parameter, Constants.SCHEDULING_INTERVAL,  new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationLocalRegressionRobust(
 					hostList,
 					vmSelectionPolicy,
@@ -348,7 +348,7 @@ public abstract class RunnerAbstract {
 		} else if (vmSelectionPolicyName.equals("rs")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyRandomSelection();
 		} else if (vmSelectionPolicyName.equals("cuv")) {
-			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance(hostList, new HostOverUtilisationProcessorStaticThreshold(threshold));
+			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance();
 		} else if (vmSelectionPolicyName.equals("cls")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyClosestToThreshold();
 		} else if (vmSelectionPolicyName.equals("lfv")) {

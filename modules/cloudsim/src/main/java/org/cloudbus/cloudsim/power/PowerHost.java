@@ -138,4 +138,9 @@ public class PowerHost extends HostDynamicWorkload {
 		return powerModel;
 	}
 
+
+	public boolean isActive(){
+		return true;
+	}
+
 }

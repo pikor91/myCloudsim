@@ -274,7 +274,6 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts){
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
-
 		for (PowerHost host : this.<PowerHost> getHostList()) {
 			if (excludedHosts.contains(host)) {
 				continue;
@@ -411,7 +410,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		List<Vm> vmsToMigrate = new LinkedList<Vm>();
 		for (PowerHostUtilizationHistory host : overUtilizedHosts) {
 			while (true) {
-				Vm vm = getVmSelectionPolicy().getVmToMigrate(host);
+				Vm vm = getVmSelectionPolicy().getVmToMigrate(host, this.getHostList());
 				if (vm == null) {
 					break;
 				}
@@ -619,6 +618,26 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	}
 
 	/**
+	 * Gets the power consumption of a host after displacement of a candidate VM from sourceHost.
+	 * The VM is not in fact placed at the host.
+	 *
+	 * @param host the host from which vm will be deallocated
+	 * @param vm the candidate vm
+	 *
+	 * @return the power after deaallocation
+	 */
+	protected double getPowerAfterDeallocation(PowerHost host, Vm vm) {
+		double power = 0, powerBeforeDeallocation = 0;
+		try {
+			power = host.getPowerModel().getPower(getMinUtilizationAfterDeallocation(host, vm));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+		return power;
+	}
+
+	/**
 	 * Gets the max power consumption of a host after placement of a candidate VM.
          * The VM is not in fact placed at the host.
          * We assume that load is balanced between PEs. The only
@@ -636,7 +655,16 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		double pePotentialUtilization = hostPotentialUtilizationMips / host.getTotalMips();
 		return pePotentialUtilization;
 	}
-	
+
+
+	protected double getMinUtilizationAfterDeallocation(PowerHost host, Vm vm) {
+		double requestedTotalMips = vm.getCurrentRequestedTotalMips();
+		double hostUtilizationMips = getUtilizationOfCpuMips(host);
+		double hostPotentialUtilizationMips = hostUtilizationMips - requestedTotalMips;
+		double pePotentialUtilization = hostPotentialUtilizationMips / host.getTotalMips();
+		return pePotentialUtilization;
+	}
+
 	/**
 	 * Gets the utilization of the CPU in MIPS for the current potentially allocated VMs.
 	 *
