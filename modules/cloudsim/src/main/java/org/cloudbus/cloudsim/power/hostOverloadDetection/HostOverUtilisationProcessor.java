@@ -8,12 +8,7 @@ import org.cloudbus.cloudsim.power.PowerHost;
  */
 public abstract class HostOverUtilisationProcessor {
 
-    public abstract boolean isHostOverUtilized(PowerHost host, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract);//{
-//        double countedThreshold = this.getHostUtilizationThreshold(host);
-//        powerVmAllocationPolicyMigrationAbstract.addHistoryEntry(host, countedThreshold);
-//        double currentUtilization = this.getCurrentUtilizationOfHost(host);
-//        return currentUtilization > countedThreshold;
-//    }
+    public abstract boolean isHostOverUtilized(PowerHost host, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract);
 
     boolean isHostOverutilizedAfterAllocation(PowerHost host, Vm vm, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract){
         boolean isHostOverUtilizedAfterAllocation = true;

@@ -9,9 +9,9 @@
 package org.cloudbus.cloudsim.power;
 
 import org.cloudbus.cloudsim.Host;
+import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
-import org.cloudbus.cloudsim.core.CloudSim;
-import org.cloudbus.cloudsim.power.hostOverloadDetection.HostOverUtilisationProcessor;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -38,7 +38,7 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 
 
 	@Override
-	public Vm getVmToMigrate(PowerHost host, List <? extends Host> hostList) {
+	public Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<PowerVm> migratableVms = getMigratableVms(host);
 		if (migratableVms.isEmpty()) {
 			return null;
@@ -51,25 +51,28 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 			for(int v = 0 ; v < numberOfVms ; v++){
 				PowerVm powerVm = migratableVms.get(v);
 				//określenie ilości pasujących do migracji potencjalnych hostów
-				List <? extends Host> avaiableDestinationHosts = getAvaiableDestinationHosts(hostList, powerVm);
+				List <? extends Host> avaiableDestinationHosts = getAvaiableDestinationHosts(hostList, powerVm, powerVmAllocationPolicyMigrationAbstract);
 				int numberOfHosts = avaiableDestinationHosts.size();
 				VU.add(v, new LinkedList<>());
 				for(int h = 0 ; h < numberOfHosts ; h++){
 					Host possibleDestinationHost = avaiableDestinationHosts.get(h);
-					double utilization = getUtilizationAfterAllocation(possibleDestinationHost, powerVm);
-					double meanUtilization = getMeanUtilizationAfterAllocation(avaiableDestinationHosts);
-
+					double utilizationOfPossibleDestinationAfterAllocation = getUtilizationAfterAllocation(possibleDestinationHost, powerVm);
+					double meanUtilization = getMeanUtilizationAfterAllocation(avaiableDestinationHosts, utilizationOfPossibleDestinationAfterAllocation, h);
 					double variance = 0.0;
 					for(int h2 = 0 ; h2 < numberOfHosts ; h2++){
 						PowerHost pp = (PowerHost) avaiableDestinationHosts.get(h2);
-						if(h == h2){
-							variance+= Math.pow(utilization - meanUtilization, 2);
+						double utilizationOfCpuCurrentHost = 0;
+						if(pp.getId() == possibleDestinationHost.getId()){
+							utilizationOfCpuCurrentHost = utilizationOfPossibleDestinationAfterAllocation;
 						}else{
-							variance+= Math.pow(pp.getUtilizationOfCpu() - meanUtilization, 2);
+							utilizationOfCpuCurrentHost = pp.getUtilizationOfCpu();
 						}
 
+						double distance = utilizationOfCpuCurrentHost - meanUtilization;
+						double squaredDistance = Math.pow(distance,2);
+						variance = variance + squaredDistance;
 					}
-					variance = variance /avaiableDestinationHosts.size();
+					variance = variance / numberOfHosts;
 					VU.get(v).add(h, variance);
 				}
 			}
@@ -92,33 +95,43 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 		return vmToMigrate;
 	}
 
-	private double getMeanUtilizationAfterAllocation(List<? extends Host> avaiableDestinationHosts) {
+	private double getMeanUtilizationAfterAllocation(List<? extends Host> avaiableDestinationHosts, double utilizationOfCpuCurrentHost, int excludedHostId) {
 		if(avaiableDestinationHosts == null || avaiableDestinationHosts.isEmpty())
 			return 0;
 		double mean = 0;
-		for(Host h : avaiableDestinationHosts){
-			PowerHost ph = (PowerHost) h;
+		for(int i = 0; i < avaiableDestinationHosts.size(); i++){
+			if(i == excludedHostId) {
+				continue;
+			}
+			Host host = avaiableDestinationHosts.get(i);
+			PowerHost ph = (PowerHost) host;
 			mean += ph.getUtilizationOfCpu();
 		}
-		mean = mean/avaiableDestinationHosts.size();
+		mean = mean + utilizationOfCpuCurrentHost;
+		mean = mean/(avaiableDestinationHosts.size()-1);
 		return mean;
 
 	}
 
 	private double getUtilizationAfterAllocation(Host possibleDestinationHost, PowerVm powerVm) {
 		PowerHost ph = (PowerHost) possibleDestinationHost;
-		ph.vmCreate(powerVm);
-		double result = ph.getUtilizationOfCpu();
-		ph.vmDestroy(powerVm);
+		ph.getUtilizationOfCpu();
+		double result = 0;
+		if(ph.vmCreate(powerVm)) {
+			result = ph.getUtilizationOfCpu();
+			ph.vmDestroy(powerVm);
+		}
 		return result;
 	}
 
-	private List<? extends Host> getAvaiableDestinationHosts(List<? extends Host> hostList, PowerVm powerVm) {
+	private List<? extends Host> getAvaiableDestinationHosts(List<? extends Host> hostList, PowerVm powerVm, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<Host> resultList = new ArrayList<>();
-
+		if (powerVmAllocationPolicyMigrationAbstract == null){
+			return resultList;
+		}
 		for(Host h : hostList){
 			PowerHost _ph = (PowerHost) h;
-			if(isHostOverUtilizedAfterAllocation(_ph, powerVm) &&_ph.isActive()){
+			if(!isHostOverUtilizedAfterAllocation(_ph, powerVm, powerVmAllocationPolicyMigrationAbstract) &&_ph.isActive()){
 				resultList.add(h);
 			}
 		}
@@ -130,23 +143,15 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 	 *
 	 * @param host the host to verify
 	 * @param vm the candidate vm
+	 * @param powerVmAllocationPolicyMigrationAbstract
 	 * @return true, if the host will be over utilized after VM placement; false otherwise
 	 */
-	protected boolean isHostOverUtilizedAfterAllocation(PowerHost host, Vm vm) {
+	protected boolean isHostOverUtilizedAfterAllocation(PowerHost host, Vm vm, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		boolean isHostOverUtilizedAfterAllocation = true;
 		if (host.vmCreate(vm)) {
-			isHostOverUtilizedAfterAllocation = isHostOverUtilized(host);
+			isHostOverUtilizedAfterAllocation = powerVmAllocationPolicyMigrationAbstract.isHostOverUtilized(host);
 			host.vmDestroy(vm);
 		}
 		return isHostOverUtilizedAfterAllocation;
-	}
-
-	public boolean isHostOverUtilized(PowerHost host) {
-		double totalRequestedMips = 0;
-		for (Vm vm : host.getVmList()) {
-			totalRequestedMips += vm.getCurrentRequestedTotalMips();
-		}
-		double utilization = totalRequestedMips / host.getTotalMips();
-		return utilization > 90;
 	}
 }

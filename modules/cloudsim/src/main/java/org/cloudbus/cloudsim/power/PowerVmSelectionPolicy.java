@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
 /**
  * An abstract VM selection policy used to select VMs from a list of migratable VMs.
@@ -38,9 +39,10 @@ public abstract class PowerVmSelectionPolicy {
 	 * Gets a VM to migrate from a given host.
 	 * 
 	 * @param host the host
+	 * @param powerVmAllocationPolicyMigrationAbstract
 	 * @return the vm to migrate
 	 */
-	public abstract Vm getVmToMigrate(PowerHost host, List <? extends Host> hostList);
+	public abstract Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract);
 
 	/**
 	 * Gets the list of migratable VMs from a given host.

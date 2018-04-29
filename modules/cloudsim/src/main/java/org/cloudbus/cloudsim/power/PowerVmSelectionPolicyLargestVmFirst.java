@@ -11,6 +11,7 @@ package org.cloudbus.cloudsim.power;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public class PowerVmSelectionPolicyLargestVmFirst extends PowerVmSelectionPolicy {
 	@Override
-	public Vm getVmToMigrate(PowerHost host, List <? extends Host> hostList) {
+	public Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<PowerVm> migratableVms = getMigratableVms(host);
 		if (migratableVms.isEmpty()) {
 			return null;

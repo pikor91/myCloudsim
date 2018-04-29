@@ -14,6 +14,7 @@ import java.util.List;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 import org.cloudbus.cloudsim.util.MathUtil;
 
 /**
@@ -50,7 +51,7 @@ public class PowerVmSelectionPolicyMaximumCorrelation extends PowerVmSelectionPo
 	}
 
 	@Override
-	public Vm getVmToMigrate(final PowerHost host, List <? extends Host> hostList) {
+	public Vm getVmToMigrate(final PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<PowerVm> migratableVms = getMigratableVms(host);
 		if (migratableVms.isEmpty()) {
 			return null;
@@ -59,7 +60,7 @@ public class PowerVmSelectionPolicyMaximumCorrelation extends PowerVmSelectionPo
 		try {
 			metrics = getCorrelationCoefficients(getUtilizationMatrix(migratableVms));
 		} catch (IllegalArgumentException e) { // the degrees of freedom must be greater than zero
-			return getFallbackPolicy().getVmToMigrate(host, null);
+			return getFallbackPolicy().getVmToMigrate(host, null, powerVmAllocationPolicyMigrationAbstract);
 		}
 		double maxMetric = Double.MIN_VALUE;
 		int maxIndex = 0;

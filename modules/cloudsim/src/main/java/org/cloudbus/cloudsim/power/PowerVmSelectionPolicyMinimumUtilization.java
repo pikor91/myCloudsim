@@ -13,6 +13,7 @@ import java.util.List;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
 /**
  * A VM selection policy that selects for migration the VM with Minimum Utilization (MU)
@@ -33,7 +34,7 @@ import org.cloudbus.cloudsim.core.CloudSim;
  */
 public class PowerVmSelectionPolicyMinimumUtilization extends PowerVmSelectionPolicy {
 	@Override
-	public Vm getVmToMigrate(PowerHost host, List <? extends Host> hostList) {
+	public Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<PowerVm> migratableVms = getMigratableVms(host);
 		if (migratableVms.isEmpty()) {
 			return null;

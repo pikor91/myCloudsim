@@ -314,8 +314,13 @@ public abstract class RunnerAbstract {
 						hostList,
 						vmSelectionPolicy,
 						parameter);
-			}else if(vmReallocationPolicyName!= null && "bfd".equals(vmReallocationPolicyName)){
+			}else if(vmReallocationPolicyName!= null && "bfd".equals(vmReallocationPolicyName)) {
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyBestFitDecreasing(
+						hostList,
+						vmSelectionPolicy,
+						parameter);
+			}else if(vmReallocationPolicyName!= null && "wpcs".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreSubmitted(
 						hostList,
 						vmSelectionPolicy,
 						parameter);

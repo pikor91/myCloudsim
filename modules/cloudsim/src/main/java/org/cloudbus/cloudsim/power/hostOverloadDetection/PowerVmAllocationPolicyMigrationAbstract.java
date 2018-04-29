@@ -306,7 +306,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * @param vm the candidate vm 
 	 * @return true, if the host will be over utilized after VM placement; false otherwise
 	 */
-	protected boolean isHostOverUtilizedAfterAllocation(PowerHost host, Vm vm) {
+	public boolean isHostOverUtilizedAfterAllocation(PowerHost host, Vm vm) {
 		boolean isHostOverUtilizedAfterAllocation = true;
 		if (host.vmCreate(vm)) {
 			isHostOverUtilizedAfterAllocation = isHostOverUtilized(host);
@@ -410,7 +410,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		List<Vm> vmsToMigrate = new LinkedList<Vm>();
 		for (PowerHostUtilizationHistory host : overUtilizedHosts) {
 			while (true) {
-				Vm vm = getVmSelectionPolicy().getVmToMigrate(host, this.getHostList());
+				Vm vm = getVmSelectionPolicy().getVmToMigrate(host, this.getHostList(), this);
 				if (vm == null) {
 					break;
 				}
@@ -621,20 +621,25 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * Gets the power consumption of a host after displacement of a candidate VM from sourceHost.
 	 * The VM is not in fact placed at the host.
 	 *
-	 * @param host the host from which vm will be deallocated
+	 * @param sourceHost the host from which vm will be deallocated
 	 * @param vm the candidate vm
 	 *
 	 * @return the power after deaallocation
 	 */
-	protected double getPowerAfterDeallocation(PowerHost host, Vm vm) {
-		double power = 0, powerBeforeDeallocation = 0;
-		try {
-			power = host.getPowerModel().getPower(getMinUtilizationAfterDeallocation(host, vm));
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
+	protected double getPowerAfterDeallocation(PowerHost sourceHost, Vm vm) {
+		if(sourceHost == null){
+//			Log.printConcatLine("Source host for VM ", vm.getId(), "is null");
+			return 0;
+		}else{
+			double power = 0;
+			try {
+				power = sourceHost.getPowerModel().getPower(getMinUtilizationAfterDeallocation(sourceHost, vm));
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
+			return power;
 		}
-		return power;
 	}
 
 	/**

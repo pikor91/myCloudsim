@@ -9,6 +9,7 @@
 package org.cloudbus.cloudsim.power.hostOverloadDetection;
 
 import org.cloudbus.cloudsim.Host;
+import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
@@ -60,6 +61,9 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWa
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
 		PowerHost sourceHost = (PowerHost) vm.getHost();
+		if(sourceHost == null){
+			Log.printConcatLine("SourceHost is null. Initial VM allocation.");
+		}
 		for (PowerHost host : this.<PowerHost> getHostList()) {
 			if (excludedHosts.contains(host)) {
 				continue;
@@ -74,7 +78,10 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWa
 					double sourcePowerAfterDeallocation = getPowerAfterDeallocation(sourceHost, vm);
 					if (destPowerAfterAllocation != -1 && sourcePowerAfterDeallocation != -1) {
 						double powerRaise = destPowerAfterAllocation - host.getPower();
-						double powerDrop = sourceHost.getPower() - sourcePowerAfterDeallocation;
+						double powerDrop=0;
+						if(sourceHost != null) {
+							powerDrop = sourceHost.getPower() - sourcePowerAfterDeallocation;
+						}
 						double powerDiff = powerRaise - powerDrop;
 						if (powerDiff < minPower) {
 							minPower = powerDiff;

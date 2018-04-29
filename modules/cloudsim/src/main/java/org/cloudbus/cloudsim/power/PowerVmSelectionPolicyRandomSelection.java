@@ -13,6 +13,7 @@ import java.util.Random;
 
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
 /**
  * A VM selection policy that randomly select VMs to migrate from a host.
@@ -32,7 +33,7 @@ import org.cloudbus.cloudsim.Vm;
  */
 public class PowerVmSelectionPolicyRandomSelection extends PowerVmSelectionPolicy {
 	@Override
-	public Vm getVmToMigrate(PowerHost host, List <? extends Host> hostList) {
+	public Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<PowerVm> migratableVms = getMigratableVms(host);
 		if (migratableVms.isEmpty()) {
 			return null;
