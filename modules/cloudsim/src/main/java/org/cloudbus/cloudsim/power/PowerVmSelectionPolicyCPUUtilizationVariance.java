@@ -56,7 +56,7 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 				VU.add(v, new LinkedList<>());
 				for(int h = 0 ; h < numberOfHosts ; h++){
 					Host possibleDestinationHost = avaiableDestinationHosts.get(h);
-					double utilizationOfPossibleDestinationAfterAllocation = getUtilizationAfterAllocation(possibleDestinationHost, powerVm);
+					double utilizationOfPossibleDestinationAfterAllocation = getUtilizationAfterAllocation(possibleDestinationHost, powerVm, powerVmAllocationPolicyMigrationAbstract);
 					double meanUtilization = getMeanUtilizationAfterAllocation(avaiableDestinationHosts, utilizationOfPossibleDestinationAfterAllocation, h);
 					double variance = 0.0;
 					for(int h2 = 0 ; h2 < numberOfHosts ; h2++){
@@ -113,14 +113,11 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 
 	}
 
-	private double getUtilizationAfterAllocation(Host possibleDestinationHost, PowerVm powerVm) {
+	private double getUtilizationAfterAllocation(Host possibleDestinationHost, PowerVm powerVm, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
+
 		PowerHost ph = (PowerHost) possibleDestinationHost;
-		ph.getUtilizationOfCpu();
-		double result = 0;
-		if(ph.vmCreate(powerVm)) {
-			result = ph.getUtilizationOfCpu();
-			ph.vmDestroy(powerVm);
-		}
+		double result = powerVmAllocationPolicyMigrationAbstract.getMaxUtilizationAfterAllocation(ph, powerVm);
+
 		return result;
 	}
 

@@ -653,7 +653,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * 
 	 * @return the power after allocation
 	 */
-	protected double getMaxUtilizationAfterAllocation(PowerHost host, Vm vm) {
+	public double getMaxUtilizationAfterAllocation(PowerHost host, Vm vm) {
 		double requestedTotalMips = vm.getCurrentRequestedTotalMips();
 		double hostUtilizationMips = getUtilizationOfCpuMips(host);
 		double hostPotentialUtilizationMips = hostUtilizationMips + requestedTotalMips;
