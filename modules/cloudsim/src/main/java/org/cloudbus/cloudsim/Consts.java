@@ -31,4 +31,11 @@ public final class Consts {
     public static final String NIX_OS = "Linux/Unix";
     /** Constant for Windows Operating Systems. */
     public static final String WINDOWS = "Windows";
+
+    // =============== Operation constants ===============
+    public static final String OPERATION = "operation";
+    public static final String START_STATE = "startState";
+    public static final String END_STATE = "endState";
+    public static final String HOST = "host";
+    public static final String VM = "vm";
 }

@@ -8,20 +8,15 @@
 
 package org.cloudbus.cloudsim.power;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
-import org.cloudbus.cloudsim.Datacenter;
-import org.cloudbus.cloudsim.DatacenterCharacteristics;
-import org.cloudbus.cloudsim.Log;
-import org.cloudbus.cloudsim.Storage;
-import org.cloudbus.cloudsim.Vm;
-import org.cloudbus.cloudsim.VmAllocationPolicy;
+import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.core.predicates.PredicateType;
+import org.cloudbus.cloudsim.power.models.PowerModelSpecPower;
+import org.omg.PortableInterceptor.ACTIVE;
 
 /**
  * PowerDatacenter is a class that enables simulation of power-aware data centers.
@@ -100,11 +95,13 @@ public class PowerDatacenter extends Datacenter {
 				List<Map<String, Object>> migrationMap = getVmAllocationPolicy().optimizeAllocation(
 						getVmList());
 
+				Set<Host> underUtilizedHostSet = new TreeSet<>();
+
 				if (migrationMap != null) {
 					for (Map<String, Object> migrate : migrationMap) {
 						Vm vm = (Vm) migrate.get("vm");
-						PowerHost targetHost = (PowerHost) migrate.get("host");
-						PowerHost oldHost = (PowerHost) vm.getHost();
+						PowerHostStateAware targetHost = (PowerHostStateAware) migrate.get("host");
+						PowerHostStateAware oldHost = (PowerHostStateAware) vm.getHost();
 
 						if (oldHost == null) {
 							Log.formatLine(
@@ -112,6 +109,12 @@ public class PowerDatacenter extends Datacenter {
 									currentTime,
 									vm.getId(),
 									targetHost.getId());
+						} else if(oldHost!=null && targetHost == null){
+							Log.formatLine(
+									"%.2f: Migration of VM #%d from host #%d is not possible. No target host found.",
+									currentTime,
+									vm.getId(),
+									oldHost.getId());
 						} else {
 							Log.formatLine(
 									"%.2f: Migration of VM #%d from Host #%d to Host #%d is started ",
@@ -121,19 +124,38 @@ public class PowerDatacenter extends Datacenter {
 									targetHost.getId());
 						}
 
-						targetHost.addMigratingInVm(vm);
-						incrementMigrationCount();
+						//if source host is underutilised send switchOff
+						if(oldHost != null && oldHost.isUnderUtilized()) {
+							Log.formatLine("%.2f: Source host #%d is marked for switch Off.", currentTime, oldHost.getId());
+						}
 
-						/** VM migration delay = RAM / bandwidth **/
-						// we use BW / 2 to model BW available for migration purposes, the other
-						// half of BW is for VM communication
-						// around 16 seconds for 1024 MB using 1 Gbit/s network
-						send(
-								getId(),
-								vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
-								CloudSimTags.VM_MIGRATE,
-								migrate);
+
+						if(targetHost != null) {
+							targetHost.addMigratingInVm(vm);
+							incrementMigrationCount();
+
+							if(targetHost.isActive() && !targetHost.isDuringTransition()){
+								/** VM migration delay = RAM / bandwidth **/
+								// we use BW / 2 to model BW available for migration purposes, the other
+								// half of BW is for VM communication
+								// around 16 seconds for 1024 MB using 1 Gbit/s network
+								send(
+										getId(),
+										vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
+										CloudSimTags.VM_MIGRATE,
+										migrate);
+							}else{
+								sendSwitchOnHost(targetHost, vm, 0);
+//								Log.printConcatLine("%d: target host #%d is turned off. Sending switching on event. ", currentTime, targetHost.getId());
+//								double delay = (vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)));
+//								PowerModelSpecPower powerModel = (PowerModelSpecPower) (targetHost.getPowerModel());
+//								int transitionTime = powerModel.getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
+//								delay += transitionTime;
+							}
+						}
 					}
+
+
 				}
 			}
 
@@ -146,6 +168,48 @@ public class PowerDatacenter extends Datacenter {
 			setLastProcessTime(currentTime);
 		}
 	}
+
+	private void sendSwitchOffHost(PowerHostStateAware oldHost, double delay) {
+		Map<String, Object> args = new HashMap<>();
+		args.put(Consts.HOST, oldHost);
+		args.put(Consts.START_STATE, HostState.ACTIVE);
+		args.put(Consts.END_STATE, HostState.INACTIVE);
+		args.put(Consts.VM, null);
+		send(getId(), delay, CloudSimTags.HOST_CHANGE_STATE_START, args );
+	}
+
+	private void sendSwitchOnHost(PowerHostStateAware oldHost, Vm migratingVm, double delay) {
+		Map<String, Object> args = new HashMap<>();
+		args.put(Consts.HOST, oldHost);
+		args.put(Consts.START_STATE, HostState.INACTIVE);
+		args.put(Consts.END_STATE, HostState.ACTIVE);
+		args.put(Consts.VM, migratingVm);
+		send(getId(), delay, CloudSimTags.HOST_CHANGE_STATE_START, args );
+	}
+
+	private Host getStandbyHostForVm(Vm vm) {
+		double minimalUtilization = Double.MAX_VALUE;
+		Host minimalHost = null;
+		for(Host h : this.getStandbyHostList()){
+			PowerHostStateAware host = (PowerHostStateAware) h;
+			if(host.getUtilizationOfCpu() < minimalUtilization && host.isSuitableForVm(vm)){
+				minimalUtilization = host.getUtilizationOfCpu();
+				minimalHost = host;
+			}
+		}
+		return minimalHost;
+	}
+
+	private Host getPoweredOffHostForVm(Vm vm) {
+		for(Host h : this.getStandbyHostList()){
+			PowerHostStateAware host = (PowerHostStateAware) h;
+			if(host.isInactive() && host.isSuitableForVm(vm)){
+				return h;
+			}
+		}
+		return null;
+	}
+
 
 
 	/**

@@ -5,10 +5,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cloudbus.cloudsim.Cloudlet;
-import org.cloudbus.cloudsim.UtilizationModel;
-import org.cloudbus.cloudsim.UtilizationModelNull;
-import org.cloudbus.cloudsim.UtilizationModelPlanetLabInMemory;
+import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.examples.power.Constants;
 
 /**
@@ -55,7 +52,7 @@ public class PlanetLabHelper {
 						Constants.CLOUDLET_PES,
 						fileSize,
 						outputSize,
-						new UtilizationModelPlanetLabInMemory(
+						new UtilizationModelPonaszkiInMemory(
 								files[i].getAbsolutePath(),
 								Constants.SCHEDULING_INTERVAL), utilizationModelNull, utilizationModelNull);
 			} catch (Exception e) {

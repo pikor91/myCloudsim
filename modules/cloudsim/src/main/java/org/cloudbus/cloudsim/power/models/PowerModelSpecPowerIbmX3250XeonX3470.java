@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim.power.models;
 
+import org.cloudbus.cloudsim.power.HostState;
+
 /**
  * The power model of an IBM server x3250 (1 x [Xeon X3470 2933 MHz, 4 cores], 8GB).<br/>
  * <a href="http://www.spec.org/power_ssj2008/results/res2009q4/power_ssj2008-20091104-00213.html">
@@ -38,4 +40,15 @@ public class PowerModelSpecPowerIbmX3250XeonX3470 extends PowerModelSpecPower {
 		return power[index];
 	}
 
+	private final int[] transitionTimes = {90, 70};
+
+	@Override
+	public int getTransitionTime(HostState startState, HostState destinationState) {
+		if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(destinationState)){
+			return transitionTimes[0];
+		}else if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(destinationState)){
+			return transitionTimes[1];
+		}
+		return 0;
+	}
 }

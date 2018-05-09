@@ -57,7 +57,7 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 				for(int h = 0 ; h < numberOfHosts ; h++){
 					Host possibleDestinationHost = avaiableDestinationHosts.get(h);
 					double utilizationOfPossibleDestinationAfterAllocation = getUtilizationAfterAllocation(possibleDestinationHost, powerVm, powerVmAllocationPolicyMigrationAbstract);
-					double meanUtilization = getMeanUtilizationAfterAllocation(avaiableDestinationHosts, utilizationOfPossibleDestinationAfterAllocation, h);
+					double meanUtilization = getMeanUtilizationAfterAllocation(avaiableDestinationHosts, utilizationOfPossibleDestinationAfterAllocation, possibleDestinationHost);
 					double variance = 0.0;
 					for(int h2 = 0 ; h2 < numberOfHosts ; h2++){
 						PowerHost pp = (PowerHost) avaiableDestinationHosts.get(h2);
@@ -95,26 +95,26 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 		return vmToMigrate;
 	}
 
-	private double getMeanUtilizationAfterAllocation(List<? extends Host> avaiableDestinationHosts, double utilizationOfCpuCurrentHost, int excludedHostId) {
+	private double getMeanUtilizationAfterAllocation(List<? extends Host> avaiableDestinationHosts, double utilizationOfPossibleDestinationHostAfterAllocation, Host possibleDestinationHost) {
 		if(avaiableDestinationHosts == null || avaiableDestinationHosts.isEmpty())
 			return 0;
 		double mean = 0;
 		for(int i = 0; i < avaiableDestinationHosts.size(); i++){
-			if(i == excludedHostId) {
-				continue;
+			Host currentHost = avaiableDestinationHosts.get(i);
+			if(currentHost.getId() == possibleDestinationHost.getId()) {
+				mean += utilizationOfPossibleDestinationHostAfterAllocation;
+			}else {
+				PowerHost ph = (PowerHost) currentHost;
+				mean += ph.getUtilizationOfCpu();
 			}
-			Host host = avaiableDestinationHosts.get(i);
-			PowerHost ph = (PowerHost) host;
-			mean += ph.getUtilizationOfCpu();
 		}
-		mean = mean + utilizationOfCpuCurrentHost;
-		mean = mean/(avaiableDestinationHosts.size()-1);
+
+		mean = mean/(avaiableDestinationHosts.size());
 		return mean;
 
 	}
 
 	private double getUtilizationAfterAllocation(Host possibleDestinationHost, PowerVm powerVm, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
-
 		PowerHost ph = (PowerHost) possibleDestinationHost;
 		double result = powerVmAllocationPolicyMigrationAbstract.getMaxUtilizationAfterAllocation(ph, powerVm);
 

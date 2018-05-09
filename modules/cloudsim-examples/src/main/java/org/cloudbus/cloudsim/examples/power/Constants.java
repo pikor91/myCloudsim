@@ -1,8 +1,6 @@
 package org.cloudbus.cloudsim.examples.power;
 
-import org.cloudbus.cloudsim.power.models.PowerModel;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G4Xeon3040;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G5Xeon3075;
+import org.cloudbus.cloudsim.power.models.*;
 
 /**
  * If you are using any algorithms, policies or workload included in the power package, please cite
@@ -23,8 +21,8 @@ public class Constants {
 
 	public final static boolean ENABLE_CSV_HEADERS = true;
 
-	public final static double SCHEDULING_INTERVAL = 300;
-	public final static double SIMULATION_LIMIT = 24 * 60 * 60;
+	public final static double SCHEDULING_INTERVAL = 30;
+	public final static double SIMULATION_LIMIT = 577 * SCHEDULING_INTERVAL /*24 * 60 * 60*/;
 
 	public final static int CLOUDLET_LENGTH	= 2500 * (int) SIMULATION_LIMIT;
 	public final static int CLOUDLET_PES	= 1;
@@ -60,8 +58,8 @@ public class Constants {
 	public final static int HOST_STORAGE = 1000000; // 1 GB
 
 	public final static PowerModel[] HOST_POWER = {
-		new PowerModelSpecPowerHpProLiantMl110G4Xeon3040(),
-		new PowerModelSpecPowerHpProLiantMl110G5Xeon3075()
+		new PowerModelSpecPowerHpProLiantMl110G4Xeon3040StateAware(),
+		new PowerModelSpecPowerHpProLiantMl110G5Xeon3075StateAware()
 	};
 	public final static String SRC_HOST_KEY = "src_host";
 	public final static String DEST_HOST_KEY = "dest_host";

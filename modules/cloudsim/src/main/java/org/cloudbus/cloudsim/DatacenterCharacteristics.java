@@ -8,6 +8,7 @@
 
 package org.cloudbus.cloudsim;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import org.cloudbus.cloudsim.core.CloudSim;
@@ -42,6 +43,9 @@ public class DatacenterCharacteristics {
 
 	/** The hosts owned by the datacenter. */
 	private List<? extends Host> hostList;
+
+	/** The standby hosts owned by the datacenter*/
+	private List<? extends Host> standByHostList;
 
 	/** The time zone, defined as the difference from GMT. */
 	private double timeZone;
@@ -130,6 +134,7 @@ public class DatacenterCharacteristics {
 		setHostList(hostList);
                 /*@todo allocationPolicy is not a parameter. It is setting
                 the attribute to itself, what has not effect. */
+		setStandByHostList(new LinkedList<>());
 		setAllocationPolicy(allocationPolicy);
 		setCostPerSecond(costPerSec);
 
@@ -578,6 +583,14 @@ public class DatacenterCharacteristics {
 		this.hostList = hostList;
 	}
 
+
+	public List<? extends Host> getStandByHostList() {
+		return standByHostList;
+	}
+
+	public void setStandByHostList(List<? extends Host> standByHostList) {
+		this.standByHostList = standByHostList;
+	}
 	/**
 	 * Gets the time zone.
 	 * 

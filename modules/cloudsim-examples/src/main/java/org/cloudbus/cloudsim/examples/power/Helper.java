@@ -9,12 +9,9 @@ import java.util.*;
 
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
-import org.cloudbus.cloudsim.power.PowerDatacenter;
-import org.cloudbus.cloudsim.power.PowerDatacenterBroker;
-import org.cloudbus.cloudsim.power.PowerHost;
-import org.cloudbus.cloudsim.power.PowerHostUtilizationHistory;
-import org.cloudbus.cloudsim.power.PowerVm;
+import org.cloudbus.cloudsim.power.*;
 import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
+import org.cloudbus.cloudsim.power.models.PowerModelSpecPower;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
@@ -80,14 +77,15 @@ public class Helper {
 				peList.add(new Pe(j, new PeProvisionerSimple(Constants.HOST_MIPS[hostType])));
 			}
 
-			hostList.add(new PowerHostUtilizationHistory(
+			hostList.add(new PowerHostStateAware(
 					i,
 					new RamProvisionerSimple(Constants.HOST_RAM[hostType]),
 					new BwProvisionerSimple(Constants.HOST_BW),
 					Constants.HOST_STORAGE,
 					peList,
 					new VmSchedulerTimeSharedOverSubscription(peList),
-					Constants.HOST_POWER[hostType]));
+					(PowerModelSpecPower) Constants.HOST_POWER[hostType],
+					HostState.ACTIVE));
 		}
 		return hostList;
 	}

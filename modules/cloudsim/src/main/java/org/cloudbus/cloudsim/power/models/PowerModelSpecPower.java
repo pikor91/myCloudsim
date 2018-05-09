@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim.power.models;
 
+import org.cloudbus.cloudsim.power.HostState;
+
 /**
  * The abstract class of power models created based on data from 
  * <a href="http://www.spec.org/power_ssj2008/">SPECpower benchmark</a>.
@@ -52,4 +54,5 @@ public abstract class PowerModelSpecPower implements PowerModel {
 	 */
 	protected abstract double getPowerData(int index);
 
+	public abstract int getTransitionTime(HostState startState, HostState destinationState);
 }

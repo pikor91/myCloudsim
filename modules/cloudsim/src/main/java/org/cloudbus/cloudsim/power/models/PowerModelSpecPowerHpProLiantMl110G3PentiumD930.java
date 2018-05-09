@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim.power.models;
 
+import org.cloudbus.cloudsim.power.HostState;
+
 /**
  * The power model of an HP ProLiant ML110 G3 (1 x [Pentium D930 3000 MHz, 2 cores], 4GB).<br/>
  * <a href="http://www.spec.org/power_ssj2008/results/res2011q1/power_ssj2008-20110127-00342.html">
@@ -36,6 +38,18 @@ public class PowerModelSpecPowerHpProLiantMl110G3PentiumD930 extends PowerModelS
 	@Override
 	protected double getPowerData(int index) {
 		return power[index];
+	}
+
+	private final int[] transitionTimes = {120, 70};
+
+	@Override
+	public int getTransitionTime(HostState startState, HostState destinationState) {
+		if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(destinationState)){
+			return transitionTimes[0];
+		}else if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(destinationState)){
+			return transitionTimes[1];
+		}
+		return 0;
 	}
 
 }

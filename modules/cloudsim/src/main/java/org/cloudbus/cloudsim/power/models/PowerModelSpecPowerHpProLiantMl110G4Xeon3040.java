@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim.power.models;
 
+import org.cloudbus.cloudsim.power.HostState;
+
 /**
  * The power model of an HP ProLiant ML110 G4 (1 x [Xeon 3040 1860 MHz, 2 cores], 4GB).<br/>
  * <a href="http://www.spec.org/power_ssj2008/results/res2011q1/power_ssj2008-20110127-00342.html">
@@ -26,7 +28,7 @@ package org.cloudbus.cloudsim.power.models;
  * @author Anton Beloglazov
  * @since CloudSim Toolkit 3.0
  */
-public class PowerModelSpecPowerHpProLiantMl110G4Xeon3040 extends PowerModelSpecPower {
+public abstract class PowerModelSpecPowerHpProLiantMl110G4Xeon3040 extends PowerModelSpecPower {
 	/** 
          * The power consumption according to the utilization percentage. 
          * @see #getPowerData(int) 

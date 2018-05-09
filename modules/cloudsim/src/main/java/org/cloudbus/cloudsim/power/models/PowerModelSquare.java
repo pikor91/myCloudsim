@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim.power.models;
 
+import org.cloudbus.cloudsim.power.HostState;
+
 /**
  * Implements a power model where the power consumption is the square of the resource usage.
  * 
@@ -60,6 +62,7 @@ public class PowerModelSquare implements PowerModel {
 		}
 		return getStaticPower() + getConstant() * Math.pow(utilization * 100, 2);
 	}
+
 
 	/**
 	 * Gets the max power.

@@ -17,6 +17,11 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
+import org.cloudbus.cloudsim.power.HostState;
+import org.cloudbus.cloudsim.power.PowerHost;
+import org.cloudbus.cloudsim.power.PowerHostStateAware;
+import org.omg.PortableInterceptor.ACTIVE;
+import org.omg.PortableInterceptor.INACTIVE;
 
 /**
  * Datacenter class is a CloudResource whose hostList are virtualized. It deals with processing of
@@ -252,7 +257,12 @@ public class Datacenter extends SimEntity {
 				updateCloudletProcessing();
 				checkCloudletCompletion();
 				break;
-
+			case CloudSimTags.HOST_CHANGE_STATE_START:
+				processHostChangeStateStart(ev, true);
+				break;
+			case CloudSimTags.HOST_CHANGE_STATE_END:
+				processHostChangeStateEnd(ev, true);
+				break;
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);
@@ -518,15 +528,24 @@ public class Datacenter extends SimEntity {
 
 		Vm vm = (Vm) migrate.get("vm");
 		Host host = (Host) migrate.get("host");
-
+		Host sourceHost = vm.getHost();
 		getVmAllocationPolicy().deallocateHostForVm(vm);
 		host.removeMigratingInVm(vm);
 		boolean result = getVmAllocationPolicy().allocateHostForVm(vm, host);
+		if(result){
+			int sourceVmListSize = sourceHost.getVmList().size();
+			int sourceMigratingInListSize = sourceHost.getVmsMigratingIn().size();
+			if( sourceVmListSize == 0 && sourceMigratingInListSize == 0){
+				Log.printConcatLine("#%d successfull migration of last VM #%d from host #%d to host #%d", CloudSim.clock(), vm.getId(), sourceHost.getId(), host.getId());
+				Map<String, Object> args = getArgs(sourceHost, HostState.ACTIVE, HostState.INACTIVE, null);
+				send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_START, args);
+			}
+		}
 		if (!result) {
 			Log.printLine("[Datacenter.processVmMigrate] VM allocation to the destination host failed");
 			System.exit(0);
 		}
-
+//		updateStandbyHostList(host);
 		if (ack) {
 			int[] data = new int[3];
 			data[0] = getId();
@@ -547,6 +566,130 @@ public class Datacenter extends SimEntity {
 				host.getId());
 		vm.setInMigration(false);
 	}
+
+	private Map<String, Object> getArgs(Host sourceHost, HostState startState, HostState endState, Vm vm) {
+		Map <String, Object> args = new HashMap<>();
+		args.put(Consts.HOST, sourceHost);
+		args.put(Consts.START_STATE, startState);
+		args.put(Consts.END_STATE, endState);
+		args.put(Consts.VM, vm);
+		return args;
+	}
+
+
+	protected void processHostChangeStateStart(SimEvent ev, boolean ack) {
+		Object tmp = ev.getData();
+//		if (!(tmp instanceof ArrayList<Object>)) {
+//			throw new ClassCastException("The data object must be PowerHostStateAware");
+//		}
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> dataMap = (Map<String, Object>) tmp;
+		if(dataMap.size() >=3){
+			PowerHostStateAware host = (PowerHostStateAware) dataMap.get(Consts.HOST);
+			HostState startState = (HostState) dataMap.get(Consts.START_STATE);
+			HostState endState = (HostState) dataMap.get(Consts.END_STATE);
+			if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(endState)){
+				handleTurningOffHost(dataMap);
+			}else if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(endState)){
+				handleTurningOnHost(dataMap);
+			}
+		}
+
+	}
+
+	private void handleTurningOnHost(Map<String, Object> dataMap ) {
+		PowerHostStateAware host = (PowerHostStateAware) dataMap.get(Consts.HOST);
+		HostState startState = (HostState) dataMap.get(Consts.START_STATE);
+		HostState endState = (HostState) dataMap.get(Consts.END_STATE);
+		Vm vm = (Vm) dataMap.get(Consts.VM);
+		Map<String, Object> args = new HashMap<>();
+		args.put(Consts.HOST, host);
+		args.put(Consts.VM, vm);
+		args.put(Consts.START_STATE, startState);
+		args.put(Consts.END_STATE, endState);
+		if(host.isInactive() && !host.isDuringTransition()){
+            //jeżeli jest wyłączony
+            host.startTransition(endState, getLastProcessTime());
+            send(getId(), host.getPowerModel().getTransitionTime(startState, endState), CloudSimTags.HOST_CHANGE_STATE_END, args);
+        } else if(host.isInactive() && host.isDuringTransition()){
+            //jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i zmigrować tam VM
+            send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
+        }else if(host.isActive() && !host.isDuringTransition()){
+            //jeżeli jest włączony (co nie powinno się nigdy stać)
+            Log.printConcatLine("Attempt of switching on host #%d which is already switched on", host.getId());
+            send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_END, args);
+        }else if(host.isActive() && host.isDuringTransition()) {
+            Log.printConcatLine("Attempt of switching on host #%d which is already during switching off", host.getId());
+            send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
+        }else{
+            Log.printConcatLine("UnexpectedState during turning on host #%d", host.getId());
+            System.exit(0);
+        }
+	}
+
+	private void handleTurningOffHost(Map<String, Object> dataMap) {
+		PowerHostStateAware host = (PowerHostStateAware) dataMap.get(Consts.HOST);
+		HostState startState = (HostState) dataMap.get(Consts.START_STATE);
+		HostState endState = (HostState) dataMap.get(Consts.END_STATE);
+		Vm vm = (Vm) dataMap.get(Consts.VM);
+
+		Map<String, Object> args = new HashMap<>();
+		args.put(Consts.HOST, host);
+		args.put(Consts.VM, vm);
+		args.put(Consts.START_STATE, startState);
+		args.put(Consts.END_STATE, endState);
+		if(host.isInactive() && !host.isDuringTransition()){
+            //jeżeli jest wyłączony
+//					host.startTransition(endState, getLastProcessTime());
+            send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_END, args);
+        } else if(host.isInactive() && host.isDuringTransition()){
+            //jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i go wyłączyć
+            send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
+        }else if(host.isActive() && !host.isDuringTransition()){
+            //jeżeli jest włączony
+            Log.printConcatLine("Attempt of switching of host #%d which is already switched on", host.getId());
+            host.startTransition(endState, CloudSim.clock());
+            send(getId(), host.getPowerModel().getTransitionTime(startState, endState), CloudSimTags.HOST_CHANGE_STATE_END, args);
+        }else if(host.isActive() && host.isDuringTransition()) {
+            //jezeli host jest wlaczoy i się wyłącza
+            Log.printConcatLine("Attempt of switching of host #%d which is already during switching off", host.getId());
+            send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
+        }else{
+            Log.printConcatLine("UnexpectedState during turning off host #%d", host.getId());
+            System.exit(0);
+        }
+	}
+
+
+	protected void processHostChangeStateEnd(SimEvent ev, boolean ack) {
+		Object tmp = ev.getData();
+		if (!(tmp instanceof Map <?, ?>)) {
+			throw new ClassCastException("The data object must be Map<String, Object>");
+		}
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> args = (Map<String, Object>) tmp;
+
+		if(args != null){
+			PowerHostStateAware ph = (PowerHostStateAware) args.get(Consts.HOST);
+			Vm vm = (Vm) args.get(Consts.VM);
+			HostState startState = (HostState) args.get(Consts.START_STATE);
+			HostState endState = (HostState) args.get(Consts.END_STATE);
+
+			ph.endTransition(CloudSim.clock());
+			if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(endState)) {
+				Log.printConcatLine("Turning off host #%d is finished", ph.getId());
+			}else if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(endState)){
+				Log.printConcatLine("Turning on host #%d is finished", ph.getId());
+
+				send(getId(),
+						vm.getHost().getRam() / ((double) ph.getBw() / (2 * 8000)),
+						CloudSimTags.VM_MIGRATE, args);
+			}
+		}
+	}
+
 
 	/**
 	 * Processes a Cloudlet based on the event type.
@@ -1071,6 +1214,17 @@ public class Datacenter extends SimEntity {
 		return (List<T>) getCharacteristics().getHostList();
 	}
 
+
+	/**
+	 * Gets the host list.
+	 *
+	 * @return the host list
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Host> List<T> getStandbyHostList() {
+		return (List<T>) getCharacteristics().getStandByHostList();
+	}
+
 	/**
 	 * Gets the datacenter characteristics.
 	 * 
@@ -1198,4 +1352,54 @@ public class Datacenter extends SimEntity {
 		this.schedulingInterval = schedulingInterval;
 	}
 
+	private void updateStandbyHostList(Host destHost) {
+		double avgUtilization = getAvgUtilizationOfStandbyList();
+
+		if(avgUtilization<0.5){
+			Host h2 = getInactiveHost();
+			List<Object> args = new ArrayList<>();
+			args.add(h2);
+			args.add(HostState.INACTIVE);
+			args.add(HostState.ACTIVE);
+			args.add("standBy");
+			send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_START, args);
+		}
+		return;
+	}
+
+	private double getAvgUtilizationOfStandbyList() {
+		double avgUtilization = 0.0;
+		double maxUtilization = Double.MIN_VALUE;
+		Host maximal = null;
+
+		for(Host h : this.getStandbyHostList()){
+			PowerHostStateAware host = (PowerHostStateAware) h;
+			avgUtilization += host.getUtilizationOfCpu();
+		}
+		avgUtilization/=getStandbyHostList().size();
+		return avgUtilization;
+	}
+
+	private Host getMaximalLoadedFromStandbyList() {
+		double maxUtilization = Double.MIN_VALUE;
+		Host maximal = null;
+		for(Host h : this.getStandbyHostList()){
+			PowerHostStateAware host = (PowerHostStateAware) h;
+			if(host.getUtilizationOfCpu() > maxUtilization){
+				maxUtilization = host.getUtilizationOfCpu();
+				maximal = host;
+			}
+		}
+		return maximal;
+	}
+	private Host getInactiveHost() {
+		Host h2 = null;
+		for(Host h : getHostList()){
+			if(!(getStandbyHostList().contains(h)) && ((PowerHostStateAware)h).isInactive()){
+				h2=h;
+				break;
+			}
+		}
+		return h2;
+	}
 }

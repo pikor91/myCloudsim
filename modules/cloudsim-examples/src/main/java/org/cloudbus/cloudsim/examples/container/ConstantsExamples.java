@@ -1,9 +1,6 @@
 package org.cloudbus.cloudsim.examples.container;
 
-import org.cloudbus.cloudsim.power.models.PowerModel;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G4Xeon3040;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G5Xeon3075;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerIbmX3550XeonX5670;
+import org.cloudbus.cloudsim.power.models.*;
 
 /**
  * In this class the specifications of the Cloudlets, Containers, VMs and Hosts are coded.
@@ -61,8 +58,8 @@ public class ConstantsExamples {
     public static final int[] HOST_RAM = new int[]{65536, 131072, 262144};
     public static final int HOST_BW = 1000000;
     public static final int HOST_STORAGE = 1000000;
-    public static final PowerModel[] HOST_POWER = new PowerModel[]{new PowerModelSpecPowerHpProLiantMl110G4Xeon3040(),
-            new PowerModelSpecPowerHpProLiantMl110G5Xeon3075(), new PowerModelSpecPowerIbmX3550XeonX5670()};
+    public static final PowerModel[] HOST_POWER = new PowerModel[]{new PowerModelSpecPowerHpProLiantMl110G4Xeon3040StateAware(),
+            new PowerModelSpecPowerHpProLiantMl110G5Xeon3075StateAware(), new PowerModelSpecPowerIbmX3550XeonX5670()};
 
     /**
      * The population of hosts, containers, and VMs are specified.

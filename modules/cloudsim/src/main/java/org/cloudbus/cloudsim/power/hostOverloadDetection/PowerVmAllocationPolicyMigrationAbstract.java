@@ -8,13 +8,7 @@
 
 package org.cloudbus.cloudsim.power.hostOverloadDetection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
@@ -108,6 +102,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * added by ponaszki
 	 */
 	private LinkedList<Integer> activeHostsNumber = new LinkedList<>();
+	private List<PowerHost> underUtilizedHostList;
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationAbstract.
@@ -124,9 +119,8 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 
 	/**
 	 * Optimize allocation of the VMs according to current utilization.
-	 * 
+	 *
 	 * @param vmList the vm list
-	 * 
 	 * @return the array list< hash map< string, object>>
 	 */
 	@Override
@@ -148,14 +142,20 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 
 		Log.printLine("Reallocation of VMs from the over-utilized hosts:");
 		ExecutionTimeMeasurer.start("optimizeAllocationVmReallocation");
-		List<Map<String, Object>> migrationMap = getNewVmPlacement(vmsToMigrate, new HashSet<Host>(
-				overUtilizedHosts));
-		getExecutionTimeHistoryVmReallocation().add(
-				ExecutionTimeMeasurer.end("optimizeAllocationVmReallocation"));
+		Set<Host> excludedHosts = new HashSet<Host>(overUtilizedHosts);
+
 		Log.printLine();
 
-		migrationMap.addAll(getMigrationMapFromUnderUtilizedHosts(overUtilizedHosts));
+		List<Map<String, Object>> underUtilizedMigrationMap = getMigrationMapFromUnderUtilizedHosts(overUtilizedHosts);
+		List<PowerHost> markedForTurningOff = getMarkedUnderUtilizedHosts();
+//		excludedHosts.addAll(markedForTurningOff);
 
+		List<Map<String, Object>> migrationMap = getNewVmPlacement(vmsToMigrate, excludedHosts);
+		getExecutionTimeHistoryVmReallocation().add(
+				ExecutionTimeMeasurer.end("optimizeAllocationVmReallocation"));
+
+
+		migrationMap.addAll(underUtilizedMigrationMap);
 		restoreAllocation();
 
 		getExecutionTimeHistoryTotal().add(ExecutionTimeMeasurer.end("optimizeAllocationTotal"));
@@ -202,7 +202,6 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		Set<PowerHost> excludedHostsForFindingNewVmPlacement = new HashSet<PowerHost>();
 		excludedHostsForFindingNewVmPlacement.addAll(overUtilizedHosts);
 		excludedHostsForFindingNewVmPlacement.addAll(switchedOffHosts);
-
 		int numberOfHosts = getHostList().size();
 
 		while (true) {
@@ -210,16 +209,16 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 				break;
 			}
 
-			PowerHost underUtilizedHost = getUnderUtilizedHost(excludedHostsForFindingUnderUtilizedHost);
+			PowerHostStateAware underUtilizedHost = getUnderUtilizedHost(excludedHostsForFindingUnderUtilizedHost);
 			if (underUtilizedHost == null) {
 				break;
 			}
+			underUtilizedHost.setUnderUtilised(true);
 
 			Log.printConcatLine("Under-utilized host: host #", underUtilizedHost.getId(), "\n");
 
 			excludedHostsForFindingUnderUtilizedHost.add(underUtilizedHost);
 			excludedHostsForFindingNewVmPlacement.add(underUtilizedHost);
-
 			List<? extends Vm> vmsToMigrateFromUnderUtilizedHost = getVmsToMigrateFromUnderUtilizedHost(underUtilizedHost);
 			if (vmsToMigrateFromUnderUtilizedHost.isEmpty()) {
 				continue;
@@ -360,6 +359,12 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 				migrate.put("vm", vm);
 				migrate.put("host", allocatedHost);
 				migrationMap.add(migrate);
+			}else{
+				Log.printConcatLine("VM #", vm.getId(), " Cannot be migrated because there is no suitable host#" );
+				Map<String, Object> migrate = new HashMap<String, Object>();
+				migrate.put("vm", vm);
+				migrate.put("host", null);
+				migrationMap.add(migrate);
 			}
 		}
 		return migrationMap;
@@ -478,12 +483,14 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	protected List<PowerHost> getSwitchedOffHosts() {
 		List<PowerHost> switchedOffHosts = new LinkedList<PowerHost>();
 		for (PowerHost host : this.<PowerHost> getHostList()) {
-			if (host.getUtilizationOfCpu() == 0) {
+			PowerHostStateAware h = (PowerHostStateAware) host;
+			if (host.getUtilizationOfCpu() == 0 && h.isInactive()) {
 				switchedOffHosts.add(host);
 			}
 		}
 		return switchedOffHosts;
 	}
+
 
 	/**
 	 * Gets the most under utilized host.
@@ -491,18 +498,19 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * @param excludedHosts the excluded hosts
 	 * @return the most under utilized host
 	 */
-	protected PowerHost getUnderUtilizedHost(Set<? extends Host> excludedHosts) {
+	protected PowerHostStateAware getUnderUtilizedHost(Set<? extends Host> excludedHosts) {
 		double minUtilization = 1;
-		PowerHost underUtilizedHost = null;
+		PowerHostStateAware underUtilizedHost = null;
 		for (PowerHost host : this.<PowerHost> getHostList()) {
 			if (excludedHosts.contains(host)) {
 				continue;
 			}
+
 			double utilization = host.getUtilizationOfCpu();
 			if (utilization > 0 && utilization < minUtilization
 					&& !areAllVmsMigratingOutOrAnyVmMigratingIn(host)) {
 				minUtilization = utilization;
-				underUtilizedHost = host;
+				underUtilizedHost = (PowerHostStateAware) host;
 			}
 		}
 		return underUtilizedHost;
@@ -790,5 +798,27 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 
 	public LinkedList<Integer> getActiveHostsNumber() {
 		return activeHostsNumber;
+	}
+
+	public List<PowerHost> getInactiveHosts() {
+		List<PowerHost> inactiveHosts = new LinkedList<>();
+		for(Host host : getHostList()){
+			PowerHostStateAware h = (PowerHostStateAware) host;
+			if(h.isInactive()){
+				inactiveHosts.add((PowerHostUtilizationHistory) host);
+			}
+		}
+		return inactiveHosts;
+	}
+
+	public List<PowerHost> getMarkedUnderUtilizedHosts() {
+		List<PowerHost> list = new ArrayList<>();
+		for(Host host :this.getHostList()){
+			PowerHostStateAware h = (PowerHostStateAware) host;
+			if(h.isUnderUtilized()){
+				list.add(h);
+			}
+		}
+		return list;
 	}
 }
