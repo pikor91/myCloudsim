@@ -52,6 +52,8 @@ public class Datacenter extends SimEntity {
 	/** The vm provisioner. */
 	private VmAllocationPolicy vmAllocationPolicy;
 
+	private boolean isSwitching;
+
 	/** The last time some cloudlet was processed in the datacenter. */
 	private double lastProcessTime;
 
@@ -517,7 +519,7 @@ public class Datacenter extends SimEntity {
 	 * @pre ev != null
 	 * @post $none
 	 */
-	protected void processVmMigrate(SimEvent ev, boolean ack) {
+	protected boolean processVmMigrate(SimEvent ev, boolean ack) {
 		Object tmp = ev.getData();
 		if (!(tmp instanceof Map<?, ?>)) {
 			throw new ClassCastException("The data object must be Map<String, Object>");
@@ -531,27 +533,18 @@ public class Datacenter extends SimEntity {
 		Host sourceHost = vm.getHost();
 		getVmAllocationPolicy().deallocateHostForVm(vm);
 		host.removeMigratingInVm(vm);
-		boolean result = getVmAllocationPolicy().allocateHostForVm(vm, host);
-		if(result){
-			int sourceVmListSize = sourceHost.getVmList().size();
-			int sourceMigratingInListSize = sourceHost.getVmsMigratingIn().size();
-			if( sourceVmListSize == 0 && sourceMigratingInListSize == 0){
-				Log.printConcatLine("#%d successfull migration of last VM #%d from host #%d to host #%d", CloudSim.clock(), vm.getId(), sourceHost.getId(), host.getId());
-				Map<String, Object> args = getArgs(sourceHost, HostState.ACTIVE, HostState.INACTIVE, null);
-				send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_START, args);
-			}
-		}
-		if (!result) {
+		boolean allocationSuccessfull = getVmAllocationPolicy().allocateHostForVm(vm, host);
+
+		if (!allocationSuccessfull) {
 			Log.printLine("[Datacenter.processVmMigrate] VM allocation to the destination host failed");
 			System.exit(0);
 		}
-//		updateStandbyHostList(host);
 		if (ack) {
 			int[] data = new int[3];
 			data[0] = getId();
 			data[1] = vm.getId();
 
-			if (result) {
+			if (allocationSuccessfull) {
 				data[2] = CloudSimTags.TRUE;
 			} else {
 				data[2] = CloudSimTags.FALSE;
@@ -565,15 +558,7 @@ public class Datacenter extends SimEntity {
 				vm.getId(),
 				host.getId());
 		vm.setInMigration(false);
-	}
-
-	private Map<String, Object> getArgs(Host sourceHost, HostState startState, HostState endState, Vm vm) {
-		Map <String, Object> args = new HashMap<>();
-		args.put(Consts.HOST, sourceHost);
-		args.put(Consts.START_STATE, startState);
-		args.put(Consts.END_STATE, endState);
-		args.put(Consts.VM, vm);
-		return args;
+		return allocationSuccessfull;
 	}
 
 
@@ -679,12 +664,12 @@ public class Datacenter extends SimEntity {
 
 			ph.endTransition(CloudSim.clock());
 			if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(endState)) {
-				Log.printConcatLine("Turning off host #%d is finished", ph.getId());
+				Log.printConcatLine("Turning off host # %d is finished", ph.getId());
 			}else if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(endState)){
 				Log.printConcatLine("Turning on host #%d is finished", ph.getId());
-
+				double delay = vm.getHost().getRam() / ((double) ph.getBw() / (2 * 8000));
 				send(getId(),
-						vm.getHost().getRam() / ((double) ph.getBw() / (2 * 8000)),
+						delay,
 						CloudSimTags.VM_MIGRATE, args);
 			}
 		}

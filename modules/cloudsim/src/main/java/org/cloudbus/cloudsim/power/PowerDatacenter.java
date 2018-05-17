@@ -42,6 +42,8 @@ public class PowerDatacenter extends Datacenter {
 	/** Indicates if migrations are disabled or not. */
 	private boolean disableMigrations;
 
+	private boolean enableSwithcingHostsState;
+
 	/** The last time submitted cloudlets were processed. */
 	private double cloudletSubmitted;
 
@@ -124,38 +126,42 @@ public class PowerDatacenter extends Datacenter {
 									targetHost.getId());
 						}
 
-						//if source host is underutilised send switchOff
-						if(oldHost != null && oldHost.isUnderUtilized()) {
-							Log.formatLine("%.2f: Source host #%d is marked for switch Off.", currentTime, oldHost.getId());
-						}
-
-
-						if(targetHost != null) {
+						if (!isEnableSwithcingHostsState()){
+							//if switching off/on hosts is enabled
 							targetHost.addMigratingInVm(vm);
 							incrementMigrationCount();
+							/** VM migration delay = RAM / bandwidth **/
+							// we use BW / 2 to model BW available for migration purposes, the other
+							// half of BW is for VM communication
+							// around 16 seconds for 1024 MB using 1 Gbit/s network
+							send(
+									getId(),
+									vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
+									CloudSimTags.VM_MIGRATE,
+									migrate);
+						}else{
+							//if switching off/on hosts is enabled
+							//if source host is underutilised send switchOff
+							if(oldHost != null && oldHost.isUnderUtilized()) {
+								Log.formatLine("%.2f: Source host #%d is marked for switch Off.", currentTime, oldHost.getId());
+							}
 
-							if(targetHost.isActive() && !targetHost.isDuringTransition()){
-								/** VM migration delay = RAM / bandwidth **/
-								// we use BW / 2 to model BW available for migration purposes, the other
-								// half of BW is for VM communication
-								// around 16 seconds for 1024 MB using 1 Gbit/s network
-								send(
-										getId(),
-										vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
-										CloudSimTags.VM_MIGRATE,
-										migrate);
-							}else{
+							if(targetHost != null) {
+								targetHost.addMigratingInVm(vm);
+								incrementMigrationCount();
+
 								sendSwitchOnHost(targetHost, vm, 0);
+
 //								Log.printConcatLine("%d: target host #%d is turned off. Sending switching on event. ", currentTime, targetHost.getId());
 //								double delay = (vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)));
 //								PowerModelSpecPower powerModel = (PowerModelSpecPower) (targetHost.getPowerModel());
 //								int transitionTime = powerModel.getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
 //								delay += transitionTime;
+
 							}
 						}
+
 					}
-
-
 				}
 			}
 
@@ -325,19 +331,51 @@ public class PowerDatacenter extends Datacenter {
 	}
 
 	@Override
-	protected void processVmMigrate(SimEvent ev, boolean ack) {
+	protected boolean processVmMigrate(SimEvent ev, boolean ack) {
 		updateCloudetProcessingWithoutSchedulingFutureEvents();
-		super.processVmMigrate(ev, ack);
+		boolean allocationSuccessfull = super.processVmMigrate(ev, ack);
+
+		if(allocationSuccessfull && isEnableSwithcingHostsState()){
+			sendSwitchOffIfVMisEmpty(ev);
+		}
 		SimEvent event = CloudSim.findFirstDeferred(getId(), new PredicateType(CloudSimTags.VM_MIGRATE));
 		if (event == null || event.eventTime() > CloudSim.clock()) {
 			updateCloudetProcessingWithoutSchedulingFutureEventsForce();
 		}
+		return allocationSuccessfull;
+	}
+
+	private void sendSwitchOffIfVMisEmpty(SimEvent ev) {
+		Object tmp = ev.getData();
+		Map<String, Object> migrate = (HashMap<String, Object>) tmp;
+		Vm vm = (Vm) migrate.get("vm");
+		Host host = (Host) migrate.get("host");
+		Host sourceHost = vm.getHost();
+
+		int sourceVmListSize = sourceHost.getVmList().size();
+		int sourceMigratingInListSize = sourceHost.getVmsMigratingIn().size();
+
+		if( sourceVmListSize == 0 && sourceMigratingInListSize == 0 &&  isEnableSwithcingHostsState()){
+			Log.printConcatLine("#%d successfull migration of last VM #%d from host #%d to host #%d", CloudSim.clock(), vm.getId(), sourceHost.getId(), host.getId());
+			Map<String, Object> args = getArgs(sourceHost, HostState.ACTIVE, HostState.INACTIVE, null);
+			send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_START, args);
+		}
+
 	}
 
 	@Override
 	protected void processCloudletSubmit(SimEvent ev, boolean ack) {
 		super.processCloudletSubmit(ev, ack);
 		setCloudletSubmitted(CloudSim.clock());
+	}
+
+	private Map<String, Object> getArgs(Host sourceHost, HostState startState, HostState endState, Vm vm) {
+		Map <String, Object> args = new HashMap<>();
+		args.put(Consts.HOST, sourceHost);
+		args.put(Consts.START_STATE, startState);
+		args.put(Consts.END_STATE, endState);
+		args.put(Consts.VM, vm);
+		return args;
 	}
 
 	/**
@@ -442,4 +480,15 @@ public class PowerDatacenter extends Datacenter {
 	public Map<Double, Double> getTimeFramesPowers() {
 		return timeFramesPowers;
 	}
+
+
+
+	public boolean isEnableSwithcingHostsState() {
+		return enableSwithcingHostsState;
+	}
+
+	public void setEnableSwithcingHostsState(boolean enableSwithcingHostsState) {
+		this.enableSwithcingHostsState = enableSwithcingHostsState;
+	}
+
 }

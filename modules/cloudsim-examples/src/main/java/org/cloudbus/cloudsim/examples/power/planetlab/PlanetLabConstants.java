@@ -16,4 +16,6 @@ public class PlanetLabConstants {
 
 	public final static int NUMBER_OF_HOSTS = 20;
 
+	/** Indicates if switching on/off hosts is disabled. */
+	public final static boolean IS_SWITCHING_ON_OFF_HOSTS_ENABLED = false;
 }

@@ -19,6 +19,8 @@ public class Constants {
 	public final static boolean ENABLE_OUTPUT = true;
 	public final static boolean OUTPUT_CSV    = true;
 
+	public final static boolean IS_SWITCHING_ON_OFF_ENABLED = true;
+
 	public final static boolean ENABLE_CSV_HEADERS = true;
 
 	public final static double SCHEDULING_INTERVAL = 30;
