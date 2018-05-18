@@ -15,8 +15,6 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.core.predicates.PredicateType;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPower;
-import org.omg.PortableInterceptor.ACTIVE;
 
 /**
  * PowerDatacenter is a class that enables simulation of power-aware data centers.
@@ -74,6 +72,7 @@ public class PowerDatacenter extends Datacenter {
 
 		setPower(0.0);
 		setDisableMigrations(false);
+		setEnableSwithcingHostsState(Consts.ENABLE_HS);
 		setCloudletSubmitted(-1);
 		setMigrationCount(0);
 	}
@@ -96,8 +95,6 @@ public class PowerDatacenter extends Datacenter {
 			if (!isDisableMigrations()) {
 				List<Map<String, Object>> migrationMap = getVmAllocationPolicy().optimizeAllocation(
 						getVmList());
-
-				Set<Host> underUtilizedHostSet = new TreeSet<>();
 
 				if (migrationMap != null) {
 					for (Map<String, Object> migrate : migrationMap) {
@@ -134,9 +131,11 @@ public class PowerDatacenter extends Datacenter {
 							// we use BW / 2 to model BW available for migration purposes, the other
 							// half of BW is for VM communication
 							// around 16 seconds for 1024 MB using 1 Gbit/s network
+							double delay = vm.getRam() / ((double) targetHost.getBw() / (2 * 8000));
+
 							send(
 									getId(),
-									vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)),
+									delay,
 									CloudSimTags.VM_MIGRATE,
 									migrate);
 						}else{
@@ -336,7 +335,7 @@ public class PowerDatacenter extends Datacenter {
 		boolean allocationSuccessfull = super.processVmMigrate(ev, ack);
 
 		if(allocationSuccessfull && isEnableSwithcingHostsState()){
-			sendSwitchOffIfVMisEmpty(ev);
+			sendSwitchOffIfVmIsEmpty(ev);
 		}
 		SimEvent event = CloudSim.findFirstDeferred(getId(), new PredicateType(CloudSimTags.VM_MIGRATE));
 		if (event == null || event.eventTime() > CloudSim.clock()) {
@@ -345,7 +344,7 @@ public class PowerDatacenter extends Datacenter {
 		return allocationSuccessfull;
 	}
 
-	private void sendSwitchOffIfVMisEmpty(SimEvent ev) {
+	private void sendSwitchOffIfVmIsEmpty(SimEvent ev) {
 		Object tmp = ev.getData();
 		Map<String, Object> migrate = (HashMap<String, Object>) tmp;
 		Vm vm = (Vm) migrate.get("vm");

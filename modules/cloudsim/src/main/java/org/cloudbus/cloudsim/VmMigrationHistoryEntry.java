@@ -4,24 +4,26 @@ package org.cloudbus.cloudsim;
  * Created by ponaszki on 2017-12-29.
  */
 public class VmMigrationHistoryEntry {
-    double migrationTime;
+    double startMigrationTime;
     int sourceHost;
     int destinationHost;
     int vmId;
+    double migrationTime;
 
-    public VmMigrationHistoryEntry(double migrationTime, int sourceHost, int destinationHost, int vmId) {
-        this.migrationTime = migrationTime;
+    public VmMigrationHistoryEntry(double startMigrationTime, int sourceHost, int destinationHost, int vmId, double migrationTime) {
+        this.startMigrationTime = startMigrationTime;
         this.sourceHost = sourceHost;
         this.destinationHost = destinationHost;
         this.vmId = vmId;
-    }
-
-    public double getMigrationTime() {
-        return migrationTime;
-    }
-
-    public void setMigrationTime(long migrationTime) {
         this.migrationTime = migrationTime;
+    }
+
+    public double getStartMigrationTime() {
+        return startMigrationTime;
+    }
+
+    public void setStartMigrationTime(long startMigrationTime) {
+        this.startMigrationTime = startMigrationTime;
     }
 
     public int getSourceHost() {
@@ -46,5 +48,13 @@ public class VmMigrationHistoryEntry {
 
     public void setVmId(int vmId) {
         this.vmId = vmId;
+    }
+
+    public double getMigrationTime() {
+        return migrationTime;
+    }
+
+    public void setMigrationTime(double migrationTime) {
+        this.migrationTime = migrationTime;
     }
 }

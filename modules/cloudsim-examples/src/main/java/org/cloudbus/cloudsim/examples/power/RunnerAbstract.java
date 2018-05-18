@@ -319,7 +319,7 @@ public abstract class RunnerAbstract {
 						hostList,
 						vmSelectionPolicy,
 						parameter);
-			}else if(vmReallocationPolicyName!= null && "wpcs".equals(vmReallocationPolicyName)){
+			}else if(vmReallocationPolicyName!= null && "wpca".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreSubmitted(
 						hostList,
 						vmSelectionPolicy,
@@ -348,13 +348,15 @@ public abstract class RunnerAbstract {
 					new PowerVmSelectionPolicyMinimumMigrationTime());
 		} else if (vmSelectionPolicyName.equals("mmt")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyMinimumMigrationTime();
-		} else if (vmSelectionPolicyName.equals("mu")) {
+		} else if (vmSelectionPolicyName.equals("minu")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyMinimumUtilization();
+		} else if (vmSelectionPolicyName.equals("maxu")) {
+			vmSelectionPolicy = new PowerVmSelectionPolicyMaximumUtilization();
 		} else if (vmSelectionPolicyName.equals("rs")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyRandomSelection();
 		} else if (vmSelectionPolicyName.equals("cuv")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance();
-		} else if (vmSelectionPolicyName.equals("cls")) {
+		} else if (vmSelectionPolicyName.equals("cth")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyClosestToThreshold();
 		} else if (vmSelectionPolicyName.equals("lfv")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyLargestVmFirst();

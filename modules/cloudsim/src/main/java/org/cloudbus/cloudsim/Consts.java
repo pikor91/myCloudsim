@@ -38,4 +38,7 @@ public final class Consts {
     public static final String END_STATE = "endState";
     public static final String HOST = "host";
     public static final String VM = "vm";
+
+    // ================ enable host switching off =============
+    public static final boolean ENABLE_HS = false;
 }

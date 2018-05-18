@@ -8,7 +8,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import org.cloudbus.cloudsim.*;
-import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.*;
 import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 import org.cloudbus.cloudsim.power.models.PowerModelSpecPower;
@@ -520,9 +519,9 @@ public class Helper {
         Collections.sort(migrations, new Comparator<VmMigrationHistoryEntry>() {
             @Override
             public int compare(VmMigrationHistoryEntry o1, VmMigrationHistoryEntry o2) {
-                if(o1.getMigrationTime() < o2.getMigrationTime())
+                if(o1.getStartMigrationTime() < o2.getStartMigrationTime())
                     return -1;
-                else if(o1.getMigrationTime() > o2.getMigrationTime())
+                else if(o1.getStartMigrationTime() > o2.getStartMigrationTime())
                     return 1;
                 else
                     return 0;
@@ -535,17 +534,18 @@ public class Helper {
             int vmId = migrations.get(i).getVmId();
             int sourceHost = migrations.get(i).getSourceHost();
             int destinationHost = migrations.get(i).getDestinationHost();
+            double startMigrationTime = migrations.get(i).getStartMigrationTime();
             double migrationTime = migrations.get(i).getMigrationTime();
             if (sourceHost != -1) {
-                lines.add(String.format("%.2f;%d;%d;%d\n", migrationTime, sourceHost, destinationHost, vmId));
-                if(migrationDiagram.get(migrationTime) == null){
-                    migrationDiagram.put(migrationTime, 1);
+                lines.add(String.format("%.2f;%d;%d;%d;%d\n", startMigrationTime, sourceHost, destinationHost, vmId, migrationTime));
+                if(migrationDiagram.get(startMigrationTime) == null){
+                    migrationDiagram.put(startMigrationTime, 1);
                 }else{
-                    migrationDiagram.put(migrationTime, migrationDiagram.get(migrationTime)+1);
+                    migrationDiagram.put(startMigrationTime, migrationDiagram.get(startMigrationTime)+1);
                 }
             }else {
-                if(migrationDiagram.get(migrationTime) == null){
-                    migrationDiagram.put(migrationTime, 0);
+                if(migrationDiagram.get(startMigrationTime) == null){
+                    migrationDiagram.put(startMigrationTime, 0);
                 }
             }
         }

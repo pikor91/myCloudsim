@@ -16,7 +16,7 @@ import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicy
 import java.util.List;
 
 
-public class PowerVmSelectionPolicyLargestVmFirst extends PowerVmSelectionPolicy {
+public class PowerVmSelectionPolicyMaximumUtilization extends PowerVmSelectionPolicy {
 	@Override
 	public Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
 		List<PowerVm> migratableVms = getMigratableVms(host);
@@ -24,14 +24,14 @@ public class PowerVmSelectionPolicyLargestVmFirst extends PowerVmSelectionPolicy
 			return null;
 		}
 		Vm vmToMigrate = null;
-		double maxMetric = Double.MIN_VALUE;
+		double minMetric = Double.MIN_VALUE;
 		for (Vm vm : migratableVms) {
 			if (vm.isInMigration()) {
 				continue;
 			}
-			double metric = vm.getMips();
-			if (metric > maxMetric) {
-				maxMetric = metric;
+			double metric = vm.getTotalUtilizationOfCpuMips(CloudSim.clock()) / vm.getMips();
+			if (metric > minMetric) {
+				minMetric = metric;
 				vmToMigrate = vm;
 			}
 		}

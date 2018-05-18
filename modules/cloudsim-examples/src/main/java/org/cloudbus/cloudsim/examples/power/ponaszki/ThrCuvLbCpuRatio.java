@@ -5,7 +5,7 @@ import org.cloudbus.cloudsim.examples.power.planetlab.NonPowerAware;
 import java.io.IOException;
 
 
-public class ThrCuvWpcS {
+public class ThrCuvLbCpuRatio {
 
 	/**
 	 * The main method.
@@ -21,7 +21,7 @@ public class ThrCuvWpcS {
 		String workload = "20110303"; // PlanetLab workload
 		String vmAllocationPolicy = "thr"; // Static Threshold (THR) VM allocation policy
 		String vmSelectionPolicy = "cuv"; // Maximum Correlation (MC) VM selection policy
-		String vmReallocationPolicy = "wpcs";
+		String vmReallocationPolicy = "lbCpuRatio";
 		String parameter = "0.8"; // the static utilization threshold
 
 		new PonaszkiRunner(

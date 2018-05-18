@@ -147,7 +147,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		Log.printLine();
 
 		List<Map<String, Object>> underUtilizedMigrationMap = getMigrationMapFromUnderUtilizedHosts(overUtilizedHosts);
-		List<PowerHost> markedForTurningOff = getMarkedUnderUtilizedHosts();
+//		List<PowerHost> markedForTurningOff = getMarkedUnderUtilizedHosts();
 //		excludedHosts.addAll(markedForTurningOff);
 
 		List<Map<String, Object>> migrationMap = getNewVmPlacement(vmsToMigrate, excludedHosts);
@@ -171,11 +171,46 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 				Vm vm = (Vm) migration.get("vm");
 				PowerHost newHost = (PowerHost) migration.get("host");
 				PowerHost oldHost = (PowerHost) vm.getHost();
-				vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, oldHost.getId(), newHost.getId(), vm.getId()));
+				double delay = countDelay(oldHost, newHost, vm );
+				vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, oldHost.getId(), newHost.getId(), vm.getId(), delay));
 			}
 		}else{
-			vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, -1,-1, -1));
+			vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, -1,-1, -1, -1));
 		}
+	}
+
+	private double countDelay(PowerHost oldHost, PowerHost newHost, Vm vm) {
+		if(newHost == null){
+			throw new IllegalStateException("Cannot count delay time for migration, destination host is null");
+		}
+		PowerHostStateAware nh = (PowerHostStateAware) newHost;
+		double transferTime = vm.getRam() / ((double) nh.getBw() / (2 * 8000));
+		double delay = -1;
+		if(Consts.ENABLE_HS) {
+			if (nh.isInactive() && !nh.isDuringTransition()) {
+				//jeżeli jest wyłączony
+				double switchOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
+				delay = switchOnTime + transferTime;
+			} else if (nh.isInactive() && nh.isDuringTransition()) {
+				//jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i zmigrować tam VM
+				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
+				delay = endTransitionDuration + transferTime;
+			} else if (nh.isActive() && !nh.isDuringTransition()) {
+				//jezeli jest wlaczony
+				delay = transferTime;
+			} else if (nh.isActive() && nh.isDuringTransition()) {
+				//jeżeli jest wlaczony i w trakciewylaczania
+				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
+				double turnOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
+				delay = endTransitionDuration + turnOnTime + transferTime;
+			} else {
+				Log.printConcatLine("UnexpectedState during turning on host #%d", nh.getId());
+				System.exit(0);
+			}
+		}else{
+			delay = transferTime;
+		}
+		return delay;
 	}
 
 	/**
@@ -482,10 +517,19 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 */
 	protected List<PowerHost> getSwitchedOffHosts() {
 		List<PowerHost> switchedOffHosts = new LinkedList<PowerHost>();
-		for (PowerHost host : this.<PowerHost> getHostList()) {
-			PowerHostStateAware h = (PowerHostStateAware) host;
-			if (host.getUtilizationOfCpu() == 0 && h.isInactive()) {
-				switchedOffHosts.add(host);
+		if(Consts.ENABLE_HS){
+			for (PowerHost host : this.<PowerHost> getHostList()) {
+				PowerHostStateAware h = (PowerHostStateAware) host;
+				if (host.getUtilizationOfCpu() == 0 && h.isInactive()) {
+					switchedOffHosts.add(host);
+				}
+			}
+		}else{
+			for (PowerHost host : this.<PowerHost> getHostList()) {
+				PowerHostStateAware h = (PowerHostStateAware) host;
+				if (host.getUtilizationOfCpu() == 0 ) {
+					switchedOffHosts.add(host);
+				}
 			}
 		}
 		return switchedOffHosts;
