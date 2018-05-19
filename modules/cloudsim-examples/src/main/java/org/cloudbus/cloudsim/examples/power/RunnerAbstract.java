@@ -314,16 +314,14 @@ public abstract class RunnerAbstract {
 						hostList,
 						vmSelectionPolicy,
 						parameter);
-			}else if(vmReallocationPolicyName!= null && "bfd".equals(vmReallocationPolicyName)) {
-				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyBestFitDecreasing(
-						hostList,
-						vmSelectionPolicy,
-						parameter);
 			}else if(vmReallocationPolicyName!= null && "wpca".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreSubmitted(
 						hostList,
 						vmSelectionPolicy,
 						parameter);
+			}else{
+				Log.printConcatLine("Choosed unknown host destination selection method", vmReallocationPolicyName);
+				System.exit(3);
 			}
 		} else if (vmAllocationPolicyName.equals("dvfs")) {
 			vmAllocationPolicy = new PowerVmAllocationPolicySimple(hostList);
@@ -363,7 +361,7 @@ public abstract class RunnerAbstract {
 		}
 		else {
 			System.out.println("Unknown VM selection policy: " + vmSelectionPolicyName);
-			System.exit(0);
+			System.exit(2);
 		}
 		return vmSelectionPolicy;
 	}
