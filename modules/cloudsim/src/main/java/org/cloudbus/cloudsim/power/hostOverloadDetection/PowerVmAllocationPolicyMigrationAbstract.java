@@ -685,7 +685,14 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		}else{
 			double power = 0;
 			try {
-				power = sourceHost.getPowerModel().getPower(getMinUtilizationAfterDeallocation(sourceHost, vm));
+				double utilisationAfterDeallocation = getMinUtilizationAfterDeallocation(sourceHost, vm);
+				if(utilisationAfterDeallocation<0 ){
+					power = sourceHost.getPowerModel().getPower(0);
+				}else if (utilisationAfterDeallocation > 1){
+					power = sourceHost.getPowerModel().getPower(1);
+				}else {
+					power = sourceHost.getPowerModel().getPower(utilisationAfterDeallocation);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.exit(0);
@@ -719,6 +726,9 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		double hostUtilizationMips = getUtilizationOfCpuMips(host);
 		double hostPotentialUtilizationMips = hostUtilizationMips - requestedTotalMips;
 		double pePotentialUtilization = hostPotentialUtilizationMips / host.getTotalMips();
+		if(pePotentialUtilization<0){
+			return 0;
+		}
 		return pePotentialUtilization;
 	}
 

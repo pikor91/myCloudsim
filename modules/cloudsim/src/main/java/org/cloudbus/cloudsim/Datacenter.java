@@ -602,10 +602,10 @@ public class Datacenter extends SimEntity {
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
         }else if(host.isActive() && !host.isDuringTransition()){
             //jeżeli jest włączony (co nie powinno się nigdy stać)
-            Log.printConcatLine("Attempt of switching on host #%d which is already switched on", host.getId());
+            Log.printConcatLine("Attempt of switching on host #"+host.getId()+" which is already switched on" );
             send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_END, args);
         }else if(host.isActive() && host.isDuringTransition()) {
-            Log.printConcatLine("Attempt of switching on host #%d which is already during switching off", host.getId());
+            Log.printConcatLine("Attempt of switching on host #"+host.getId()+" which is already during switching off");
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
         }else{
             Log.printConcatLine("UnexpectedState during turning on host #%d", host.getId());
@@ -614,6 +614,7 @@ public class Datacenter extends SimEntity {
 	}
 
 	private void handleTurningOffHost(Map<String, Object> dataMap) {
+
 		PowerHostStateAware host = (PowerHostStateAware) dataMap.get(Consts.HOST);
 		HostState startState = (HostState) dataMap.get(Consts.START_STATE);
 		HostState endState = (HostState) dataMap.get(Consts.END_STATE);
@@ -664,9 +665,9 @@ public class Datacenter extends SimEntity {
 
 			ph.endTransition(CloudSim.clock());
 			if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(endState)) {
-				Log.printConcatLine("Turning off host # %d is finished", ph.getId());
+				Log.printConcatLine("Turning off host # "+  ph.getId() +" is finished");
 			}else if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(endState)){
-				Log.printConcatLine("Turning on host #%d is finished", ph.getId());
+				Log.printConcatLine("Turning on host # "+ ph.getId() +" is finished" );
 				double delay = vm.getHost().getRam() / ((double) ph.getBw() / (2 * 8000));
 				send(getId(),
 						delay,

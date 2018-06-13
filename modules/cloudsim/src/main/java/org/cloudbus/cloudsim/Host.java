@@ -197,8 +197,12 @@ public class Host {
 	 * @return true, if is suitable for vm
 	 */
 	public boolean isSuitableForVm(Vm vm) {
-		return (getVmScheduler().getPeCapacity() >= vm.getCurrentRequestedMaxMips()
-				&& getVmScheduler().getAvailableMips() >= vm.getCurrentRequestedTotalMips()
+		double peCapacity = getVmScheduler().getPeCapacity();
+		double currentRequestedMaxMips = vm.getCurrentRequestedMaxMips();
+		double availableMips = getVmScheduler().getAvailableMips();
+		double currentRequestedTotalMips = vm.getCurrentRequestedTotalMips();
+		return (peCapacity >= currentRequestedMaxMips
+				&& availableMips >= currentRequestedTotalMips
 				&& getRamProvisioner().isSuitableForVm(vm, vm.getCurrentRequestedRam()) && getBwProvisioner()
 				.isSuitableForVm(vm, vm.getCurrentRequestedBw()));
 	}

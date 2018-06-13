@@ -31,6 +31,13 @@ import org.cloudbus.cloudsim.util.MathUtil;
  */
 public class Helper {
 
+	static double avg_host_utilization = 0.0;
+	static double number_of_migrations = 0.0;
+	static double power_usage = 0.0;
+	static double avg_num_of_active_hosts = 0.0;
+	static double avg_migration_time = 0.0;
+	static double slatah = 0.0;
+	static double pdm = 0.0;
 	/**
 	 * Creates the vm list.
 	 * 
@@ -231,6 +238,8 @@ public class Helper {
 		Log.enable();
 		List<Host> hosts = datacenter.getHostList();
 
+		String newExperimentName = modifyExperimentName(experimentName);
+
 		int numberOfHosts = hosts.size();
 		int numberOfVms = vms.size();
 
@@ -242,12 +251,14 @@ public class Helper {
 
 		double slaOverall = slaMetrics.get("overall");
 		double slaAverage = slaMetrics.get("average");
-		double slaDegradationDueToMigration = slaMetrics.get("underallocated_migration");
+		double slaDegradationDueToMigration = slaMetrics.get("underallocated_migration"); //pdm
+		pdm = slaDegradationDueToMigration;
 		// double slaTimePerVmWithMigration = slaMetrics.get("sla_time_per_vm_with_migration");
 		// double slaTimePerVmWithoutMigration =
 		// slaMetrics.get("sla_time_per_vm_without_migration");
 		// double slaTimePerHost = getSlaTimePerHost(hosts);
-		double slaTimePerActiveHost = getSlaTimePerActiveHost(hosts);
+		double slaTimePerActiveHost = getSlaTimePerActiveHost(hosts); //slatah
+		slatah = slaTimePerActiveHost;
 
 		double sla = slaTimePerActiveHost * slaDegradationDueToMigration;
 
@@ -309,7 +320,7 @@ public class Helper {
             }
 
 			StringBuilder data = new StringBuilder();
-			String delimeter = ",";
+			String delimeter = ";";
 
 			data.append(experimentName + delimeter);
 			data.append(parseExperimentName(experimentName));
@@ -364,21 +375,22 @@ public class Helper {
 
 //				writeMetricHistory(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
 //						+ "_metric");
-				writeAverageUtilisation(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
+				writeAverageUtilisation(hosts, vmAllocationPolicy, outputFolder + "/metrics/" + newExperimentName
 						+ "_avg_utilisation_time_metric");
-				writeActiveHostNumber(vmAllocationPolicy, outputFolder + "/metrics/" + experimentName
+				writeActiveHostNumber(vmAllocationPolicy, outputFolder + "/metrics/" + newExperimentName
 						+ "_number_of_active_hosts");
-				writeVmMigrationsInTime(vmAllocationPolicy, outputFolder + "/metrics/" + experimentName+"_num_of_vm_migrations");
-				writePowerUsageInTime(((PowerDatacenter)datacenter).getTimeFramesPowers(), outputFolder + "/power/" + experimentName+"_power_in_time");
+				writeVmMigrationsInTime(vmAllocationPolicy, outputFolder + "/metrics/" + newExperimentName+"_num_of_vm_migrations");
+				writePowerUsageInTime(((PowerDatacenter)datacenter).getTimeFramesPowers(), outputFolder + "/power/" + newExperimentName+"_power_in_time");
+				writeStatsTable(outputFolder+"/stats/"+ newExperimentName+"statsTable");
 			}
 
 			data.append("\n");
 
-			writeDataRow(data.toString(), outputFolder + "/stats/" + experimentName + "_stats.csv");
+			writeDataRow(data.toString(), outputFolder + "/stats/" + newExperimentName + "_stats.csv");
 			writeDataColumn(timeBeforeHostShutdown, outputFolder + "/time_before_host_shutdown/"
-					+ experimentName + "_time_before_host_shutdown.csv");
+					+ newExperimentName + "_time_before_host_shutdown.csv");
 			writeDataColumn(timeBeforeVmMigration, outputFolder + "/time_before_vm_migration/"
-					+ experimentName + "_time_before_vm_migration.csv");
+					+ newExperimentName + "_time_before_vm_migration.csv");
 
 //			writeNumberOfActiveHosts(hosts, outputFolder+"/hosts/"+experimentName+"_activeHosts");
 //			writeVmsStateHisotry(vms, outputFolder + "/sla/" + experimentName + "_metrics");
@@ -466,7 +478,43 @@ public class Helper {
 		Log.setDisabled(true);
 	}
 
-    private static void writePowerUsageInTime(Map<Double, Double> timeFramesPowers, String outputPath) {
+	private static String modifyExperimentName(String experimentName) {
+		StringBuilder sb = new StringBuilder();
+		if(Consts.ENABLE_HS) {
+			sb.append("1_");
+		}else{
+			sb.append("0_");
+		}
+		sb.append(experimentName);
+		return sb.toString();
+	}
+
+	private static void writeStatsTable(String outputPath) {
+		try {
+			File file = new File(outputPath + ".csv");
+
+			file.createNewFile();
+
+			BufferedWriter writer = null;
+			writer = new BufferedWriter(new FileWriter(file));
+			if(Constants.ENABLE_CSV_HEADERS){
+				writer.write("średnia utylizacja hosta (0-1);ilość migracji;zużycie mocy (MWh);liczba aktywnych hostów;czas migracji;slatah; pdm\n");
+			}
+			writer.write(String.format("%.2f;%d;%2.4f;%3.2f;%3.2f;%.5f;%.5f\n", avg_host_utilization, (int)number_of_migrations, power_usage, avg_num_of_active_hosts, avg_migration_time, slatah, pdm));
+			writer.close();
+
+			avg_host_utilization=0.0;
+			number_of_migrations=0.0;
+			power_usage=0.0;
+			avg_num_of_active_hosts=0.0;
+			avg_migration_time=0.0;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void writePowerUsageInTime(Map<Double, Double> timeFramesPowers, String outputPath) {
         List<String> lines = new ArrayList<>();
         List<String> lines_incremental = new ArrayList<>();
         List<String> lines_aggregated = new ArrayList<>();
@@ -476,10 +524,11 @@ public class Helper {
             Double power = entry.getValue();
             double power_kWh = power / (3600*1000);
             power_sum_kWh = power_sum_kWh + power_kWh;
-            lines.add(String.format("%.2f;%.4f\n", time, power_kWh));
+            lines.add(String.format("%.2f;%2.4f\n", time, power_kWh));
             lines_incremental.add(String.format("%.2f;%.4f\n", time, power_sum_kWh));
 
         }
+		power_usage = power_sum_kWh;
 
 		lines_aggregated = writeInIntervals(timeFramesPowers);
 //        writeDataRows(lines, outputPath + ".csv", "time;power\n");
@@ -489,7 +538,9 @@ public class Helper {
 
 	private static List<String> writeInIntervals(Map<Double, Double> timeFramesPowers) {
 		Map<Double, Double> powers = new TreeMap<>();
-		for(double lt=0, et=299; et<90000; lt=lt+300, et=et+300){
+		int endtime = 29;
+		int interval = 30;
+		for(double lt=0, et=endtime; et<90000; lt=lt+interval, et=et+interval){
 			for(Map.Entry<Double, Double> entry : timeFramesPowers.entrySet()) {
 				Double time = entry.getKey();
 				Double power = entry.getValue();
@@ -530,14 +581,16 @@ public class Helper {
         Map<Double, Integer> migrationDiagram = new TreeMap<>();
 	    LinkedList<String> lines = new LinkedList<>();
 	    int counter = 0;
+	    double sum_of_migtarion_time = 0.0;
 	    for(int i = 0; i < migrations.size(); i++){
             int vmId = migrations.get(i).getVmId();
             int sourceHost = migrations.get(i).getSourceHost();
             int destinationHost = migrations.get(i).getDestinationHost();
             double startMigrationTime = migrations.get(i).getStartMigrationTime();
             double migrationTime = migrations.get(i).getMigrationTime();
+            sum_of_migtarion_time = sum_of_migtarion_time + migrationTime;
             if (sourceHost != -1) {
-                lines.add(String.format("%.2f;%d;%d;%d;%d\n", startMigrationTime, sourceHost, destinationHost, vmId, migrationTime));
+                lines.add(String.format("%.2f;%d;%d;%d;%f\n", startMigrationTime, sourceHost, destinationHost, vmId, migrationTime));
                 if(migrationDiagram.get(startMigrationTime) == null){
                     migrationDiagram.put(startMigrationTime, 1);
                 }else{
@@ -549,6 +602,11 @@ public class Helper {
                 }
             }
         }
+
+        sum_of_migtarion_time = sum_of_migtarion_time/migrations.size();
+		number_of_migrations = migrations.size();
+		avg_migration_time = sum_of_migtarion_time;
+				//todo stats
 
         Map<Double, Integer> migrationDiagram2 = new TreeMap<>();
         LinkedList<String> lines2 = new LinkedList<>();
@@ -564,7 +622,7 @@ public class Helper {
 
         }
 
-        writeDataRows(lines, outputPath + ".csv", "migration_time;src_host;dest_host;vm_id\n");
+        writeDataRows(lines, outputPath + ".csv", "migration_time;src_host;dest_host;vm_id;\n");
         writeDataRows(lines2, outputPath+"_cum" + ".csv", "migration_time;num_of_mig_cum\n");
         writeDataRows(lines3, outputPath + ".csv", "migration_time;num_of_mig\n");
 
@@ -574,10 +632,13 @@ public class Helper {
 		LinkedList<Double> activeHostsTime = vmAllocationPolicy.getActiveHostsTime();
         LinkedList<Integer> activeHostsNumber = vmAllocationPolicy.getActiveHostsNumber();
         LinkedList<String> lines = new LinkedList<>();
+        double avg = 0;
         for(int i = 0; i < activeHostsTime.size(); i++){
 		    lines.add(String.format("%.2f;%d\n", activeHostsTime.get(i), activeHostsNumber.get(i)));
+		    avg = avg + activeHostsNumber.get(i);
         }
-
+        avg = avg / activeHostsNumber.size();
+		avg_num_of_active_hosts = avg;
         writeDataRows(lines, outputPath+".csv", "time;num_of_active_hosts\n");
 	}
 
@@ -610,14 +671,22 @@ public class Helper {
 
 		try {
 			File file = new File(outputPath + ".csv");
+			File file_avg = new File(outputPath +"_total" + ".csv");
 
-				file.createNewFile();
+			file.createNewFile();
+			file_avg.createNewFile();
 
 			BufferedWriter writer = null;
-				writer = new BufferedWriter(new FileWriter(file));
-				if(Constants.ENABLE_CSV_HEADERS){
-					writer.write("time;avg_utilisation\n");
-				}
+			writer = new BufferedWriter(new FileWriter(file));
+			if(Constants.ENABLE_CSV_HEADERS){
+				writer.write("time;avg_utilisation\n");
+			}
+
+			BufferedWriter writer2 = null;
+			writer2 = new BufferedWriter(new FileWriter(file_avg));
+			if(Constants.ENABLE_CSV_HEADERS){
+				writer2.write("avg_utilisation_total\n");
+			}
 
 
 			Map<Double, List<Double>> utilisationList = new TreeMap<>();// map key is time
@@ -643,13 +712,20 @@ public class Helper {
 					}
 				}
 			}
-
+			double avg = 0;
 			for(Map.Entry<Double, List<Double>> entry : utilisationList.entrySet() ){
 				Double time = entry.getKey();
 				List<Double> utilisationsInTime = entry.getValue();
 				double mean = MathUtil.mean(utilisationsInTime);
+				avg = avg+mean;
 				writer.write(String.format("%.2f;%.4f\n", time, mean));
 			}
+
+			avg = avg/ utilisationList.size();
+			writer2.write(String.format("%.4f\n", avg));
+			writer2.close();
+			avg_host_utilization = avg;
+
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -803,8 +879,8 @@ public class Helper {
 			metrics.put("average", MathUtil.mean(slaViolation));
 		}
 		metrics.put("underallocated_migration", totalUnderAllocatedDueToMigration / totalRequested);
-		// metrics.put("sla_time_per_vm_with_migration", slaViolationTimePerVmWithMigration /
-		// totalTime);
+//		 metrics.put("sla_time_per_vm_with_migration", slaViolationTimePerVmWithMigration /
+//		 totalTime);
 		// metrics.put("sla_time_per_vm_without_migration", slaViolationTimePerVmWithoutMigration /
 		// totalTime);
 

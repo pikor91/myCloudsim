@@ -14,5 +14,5 @@ package org.cloudbus.cloudsim.examples.power.planetlab;
  */
 public class PlanetLabConstants {
 
-	public final static int NUMBER_OF_HOSTS = 600;
+	public final static int NUMBER_OF_HOSTS = 800;
 }

@@ -550,7 +550,23 @@ public class Vm {
 	public List<Double> getCurrentAllocatedMips() {
 		return currentAllocatedMips;
 	}
-
+	/**
+	 * Gets the current total allocated mips.
+	 *
+	 * @return the current allocated mips
+	 * @TODO replace returning the field by a call to getCloudletScheduler().getCurrentMipsShare()
+	 */
+	public double getCurrentAllocatedTotalMips() {
+		double total = 0;
+		if(currentAllocatedMips != null){
+			for(Double mips : currentAllocatedMips){
+				total+=mips;
+			}
+		}else{
+			total =0;
+		}
+		return total;
+	}
 	/**
 	 * Sets the current allocated mips.
 	 * 

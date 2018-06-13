@@ -14,6 +14,7 @@ import org.cloudbus.cloudsim.VmScheduler;
 import org.cloudbus.cloudsim.power.models.PowerModelSpecPower;
 import org.cloudbus.cloudsim.provisioners.BwProvisioner;
 import org.cloudbus.cloudsim.provisioners.RamProvisioner;
+import org.omg.PortableInterceptor.INACTIVE;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -79,6 +80,17 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 			Log.printConcatLine("Could not change currentState. Host already in transition");
 		}
 		return false;
+	}
+
+	@Override
+	public double getEnergyLinearInterpolation(double fromUtilization, double toUtilization, double time) {
+		if(isActive()) {
+			return super.getEnergyLinearInterpolation(fromUtilization, toUtilization, time);
+		}else if(HostState.INACTIVE.equals(currentState) && duringTransition){
+			return 0;
+		}else {
+			return getPower(1.0);
+		}
 	}
 
 	@Override

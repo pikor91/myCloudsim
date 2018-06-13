@@ -13,13 +13,12 @@ import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 
 public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelectionPolicy {
 
+	Map<Host, List<List<Double>>> vuVectors = new HashMap<>();
 
 	@Override
 	public Vm getVmToMigrate(PowerHost host, List<? extends Host> hostList, PowerVmAllocationPolicyMigrationAbstract powerVmAllocationPolicyMigrationAbstract) {
@@ -27,39 +26,41 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 		if (migratableVms.isEmpty()) {
 			return null;
 		}
-
+		List<List<Double>> VU = null;
 		Vm vmToMigrate = null;
-		int numberOfVms = host.getVmList().size();
-		List<List<Double> > VU =  new LinkedList<>();
 
-			for(int v = 0 ; v < numberOfVms ; v++){
+			int numberOfVms = migratableVms.size();
+			VU = new LinkedList<>();
+
+			for (int v = 0; v < numberOfVms; v++) {
 				PowerVm powerVm = migratableVms.get(v);
 				//określenie ilości pasujących do migracji potencjalnych hostów
-				List <? extends Host> avaiableDestinationHosts = getAvaiableDestinationHosts(hostList, powerVm, powerVmAllocationPolicyMigrationAbstract);
+				List<? extends Host> avaiableDestinationHosts = getAvaiableDestinationHosts(hostList, powerVm, powerVmAllocationPolicyMigrationAbstract);
 				int numberOfHosts = avaiableDestinationHosts.size();
 				VU.add(v, new LinkedList<>());
-				for(int h = 0 ; h < numberOfHosts ; h++){
+				for (int h = 0; h < numberOfHosts; h++) {
 					Host possibleDestinationHost = avaiableDestinationHosts.get(h);
 					double utilizationOfPossibleDestinationAfterAllocation = getUtilizationAfterAllocation(possibleDestinationHost, powerVm, powerVmAllocationPolicyMigrationAbstract);
 					double meanUtilization = getMeanUtilizationAfterAllocation(avaiableDestinationHosts, utilizationOfPossibleDestinationAfterAllocation, possibleDestinationHost);
 					double variance = 0.0;
-					for(int h2 = 0 ; h2 < numberOfHosts ; h2++){
+					for (int h2 = 0; h2 < numberOfHosts; h2++) {
 						PowerHost pp = (PowerHost) avaiableDestinationHosts.get(h2);
 						double utilizationOfCpuCurrentHost = 0;
-						if(pp.getId() == possibleDestinationHost.getId()){
+						if (pp.getId() == possibleDestinationHost.getId()) {
 							utilizationOfCpuCurrentHost = utilizationOfPossibleDestinationAfterAllocation;
-						}else{
+						} else {
 							utilizationOfCpuCurrentHost = pp.getUtilizationOfCpu();
 						}
 
 						double distance = utilizationOfCpuCurrentHost - meanUtilization;
-						double squaredDistance = Math.pow(distance,2);
+						double squaredDistance = Math.pow(distance, 2);
 						variance = variance + squaredDistance;
 					}
 					variance = variance / numberOfHosts;
 					VU.get(v).add(h, variance);
 				}
 			}
+
 
 		int vMin = -1, hMin = -1;
 		double minVariance= Double.MAX_VALUE;
@@ -134,5 +135,9 @@ public class PowerVmSelectionPolicyCPUUtilizationVariance extends PowerVmSelecti
 			host.vmDestroy(vm);
 		}
 		return isHostOverUtilizedAfterAllocation;
+	}
+
+	public void resetPolicyForHost(PowerHostUtilizationHistory host) {
+		vuVectors.remove(host);
 	}
 }

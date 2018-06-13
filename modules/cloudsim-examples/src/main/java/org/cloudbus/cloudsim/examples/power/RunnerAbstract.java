@@ -315,7 +315,7 @@ public abstract class RunnerAbstract {
 						vmSelectionPolicy,
 						parameter);
 			}else if(vmReallocationPolicyName!= null && "wpca".equals(vmReallocationPolicyName)){
-				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreSubmitted(
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreAbsolute(
 						hostList,
 						vmSelectionPolicy,
 						parameter);
@@ -356,7 +356,7 @@ public abstract class RunnerAbstract {
 			vmSelectionPolicy = new PowerVmSelectionPolicyCPUUtilizationVariance();
 		} else if (vmSelectionPolicyName.equals("cth")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyClosestToThreshold();
-		} else if (vmSelectionPolicyName.equals("lfv")) {
+		} else if (vmSelectionPolicyName.equals("lvf")) {
 			vmSelectionPolicy = new PowerVmSelectionPolicyLargestVmFirst();
 		}
 		else {

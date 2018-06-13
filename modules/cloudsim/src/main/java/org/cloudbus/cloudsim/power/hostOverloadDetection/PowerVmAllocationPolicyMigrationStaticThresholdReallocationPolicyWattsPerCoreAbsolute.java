@@ -34,7 +34,7 @@ import java.util.Set;
  * @author Anton Beloglazov
  * @since CloudSim Toolkit 3.0
  */
-public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreSubmitted extends PowerVmAllocationPolicyMigrationStaticThreshold {
+public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreAbsolute extends PowerVmAllocationPolicyMigrationStaticThreshold {
 
 	/** The static host CPU utilization threshold to detect over utilization.
          * It is a percentage value from 0 to 1
@@ -48,7 +48,7 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWa
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param utilizationThreshold the utilization threshold
 	 */
-	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreSubmitted(
+	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreAbsolute(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
 			double utilizationThreshold) {

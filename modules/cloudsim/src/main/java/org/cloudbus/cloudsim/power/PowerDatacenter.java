@@ -280,6 +280,7 @@ public class PowerDatacenter extends Datacenter {
 						timeDiff);
 				timeFrameDatacenterEnergy += timeFrameHostEnergy;
 
+
 				Log.printLine();
 				Log.formatLine(
 						"%.2f: [Host #%d] utilization at %.2f was %.2f%%, now is %.2f%%",
@@ -332,10 +333,16 @@ public class PowerDatacenter extends Datacenter {
 	@Override
 	protected boolean processVmMigrate(SimEvent ev, boolean ack) {
 		updateCloudetProcessingWithoutSchedulingFutureEvents();
+
+		Object tmp = ev.getData();
+		Map<String, Object> migrate = (HashMap<String, Object>) tmp;
+
+		Vm vm = (Vm) migrate.get("vm");
+		Host sourceHost = vm.getHost();
 		boolean allocationSuccessfull = super.processVmMigrate(ev, ack);
 
 		if(allocationSuccessfull && isEnableSwithcingHostsState()){
-			sendSwitchOffIfVmIsEmpty(ev);
+			sendSwitchOffIfVmIsEmpty(sourceHost, ev);
 		}
 		SimEvent event = CloudSim.findFirstDeferred(getId(), new PredicateType(CloudSimTags.VM_MIGRATE));
 		if (event == null || event.eventTime() > CloudSim.clock()) {
@@ -344,12 +351,11 @@ public class PowerDatacenter extends Datacenter {
 		return allocationSuccessfull;
 	}
 
-	private void sendSwitchOffIfVmIsEmpty(SimEvent ev) {
+	private void sendSwitchOffIfVmIsEmpty(Host sourceHost, SimEvent ev) {
 		Object tmp = ev.getData();
 		Map<String, Object> migrate = (HashMap<String, Object>) tmp;
 		Vm vm = (Vm) migrate.get("vm");
 		Host host = (Host) migrate.get("host");
-		Host sourceHost = vm.getHost();
 
 		int sourceVmListSize = sourceHost.getVmList().size();
 		int sourceMigratingInListSize = sourceHost.getVmsMigratingIn().size();
