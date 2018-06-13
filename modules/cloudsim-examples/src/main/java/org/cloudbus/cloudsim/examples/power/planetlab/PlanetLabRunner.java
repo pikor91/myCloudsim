@@ -52,7 +52,7 @@ public class PlanetLabRunner extends RunnerAbstract {
 				workload,
 				vmAllocationPolicy,
 				vmSelectionPolicy,
-				null,
+				"wpc",
 				parameter);
 	}
 

@@ -1163,11 +1163,6 @@ public class Helper {
 
 
 	public static void makeStatsTable(
-			PowerDatacenter datacenter,
-			List<Vm> vms,
-			double lastClock,
-			String experimentName,
-			boolean outputInCsv,
 			String outputFolder){
 		String tablePath = outputFolder + "/stats/";
 		File finalTable = new File(tablePath +"final.csv");
@@ -1181,6 +1176,9 @@ public class Helper {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new FileWriter(finalTable));
+			if(Constants.ENABLE_CSV_HEADERS){
+				writer.write("naswa testu; średnia utylizacja hosta (0-1);ilość migracji;zużycie mocy (MWh);liczba aktywnych hostów;czas migracji;slatah; pdm\n");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1200,7 +1198,7 @@ public class Helper {
 					String[] split = currentFile.getName().split("_");
 
 					String name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
-					String data;
+					String data=null;
 					try {
 						data = reader.readLine();
 						data = reader.readLine();
