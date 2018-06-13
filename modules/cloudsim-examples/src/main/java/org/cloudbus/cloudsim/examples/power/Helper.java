@@ -1,9 +1,7 @@
 package org.cloudbus.cloudsim.examples.power;
 
-import java.io.BufferedWriter;
+import java.io.*;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 
@@ -1163,4 +1161,61 @@ public class Helper {
 		}
 	}
 
+
+	public static void makeStatsTable(
+			PowerDatacenter datacenter,
+			List<Vm> vms,
+			double lastClock,
+			String experimentName,
+			boolean outputInCsv,
+			String outputFolder){
+		String tablePath = outputFolder + "/stats/";
+		File finalTable = new File(tablePath +"final.csv");
+		if (!finalTable.exists()){
+			try {
+				finalTable.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new FileWriter(finalTable));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
+		File stats = new File(tablePath);
+		File[] files = stats.listFiles();
+
+		for(File currentFile : files){
+				if(currentFile.getName().contains("statsTable")){
+					BufferedReader reader = null;
+					try {
+						reader = new BufferedReader(new FileReader(currentFile));
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+					String[] split = currentFile.getName().split("_");
+
+					String name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
+					String data;
+					try {
+						data = reader.readLine();
+						data = reader.readLine();
+						reader.close();
+						writer.write(name+";"+data);
+						writer.newLine();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+		}
+		try {
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
