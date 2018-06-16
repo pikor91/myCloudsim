@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim;
 
+import org.cloudbus.cloudsim.power.HostState;
+
 /**
  * Stores historic data about a host.
  * 
@@ -30,6 +32,9 @@ public class HostStateHistoryEntry {
          */
 	private boolean isActive;
 
+	private HostState hoststate;
+
+	private boolean duringTransition;
 	/**
 	 * Instantiates a new host state history entry.
 	 * 
@@ -38,11 +43,13 @@ public class HostStateHistoryEntry {
 	 * @param requestedMips the requested mips
 	 * @param isActive the is active
 	 */
-	public HostStateHistoryEntry(double time, double allocatedMips, double requestedMips, boolean isActive) {
+	public HostStateHistoryEntry(double time, double allocatedMips, double requestedMips, boolean isActive, HostState hostState, boolean duringTransition) {
 		setTime(time);
 		setAllocatedMips(allocatedMips);
 		setRequestedMips(requestedMips);
 		setActive(isActive);
+		setHoststate(hostState);
+		setDuringTransition(duringTransition);
 	}
 
 	/**
@@ -117,4 +124,19 @@ public class HostStateHistoryEntry {
 		return isActive;
 	}
 
+	public HostState getHoststate() {
+		return hoststate;
+	}
+
+	public void setHoststate(HostState hoststate) {
+		this.hoststate = hoststate;
+	}
+
+	public boolean isDuringTransition() {
+		return duringTransition;
+	}
+
+	public void setDuringTransition(boolean duringTransition) {
+		this.duringTransition = duringTransition;
+	}
 }

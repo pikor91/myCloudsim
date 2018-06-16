@@ -536,8 +536,8 @@ public class Helper {
 
 	private static List<String> writeInIntervals(Map<Double, Double> timeFramesPowers) {
 		Map<Double, Double> powers = new TreeMap<>();
-		int endtime = 29;
-		int interval = 30;
+		int endtime = 299;
+		int interval = 300;
 		for(double lt=0, et=endtime; et<90000; lt=lt+interval, et=et+interval){
 			for(Map.Entry<Double, Double> entry : timeFramesPowers.entrySet()) {
 				Double time = entry.getKey();

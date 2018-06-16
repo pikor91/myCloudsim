@@ -310,7 +310,8 @@ public class ContainerHostDynamicWorkload extends ContainerHost{
                     time,
                     allocatedMips,
                     requestedMips,
-                    isActive);
+                    isActive, null,
+                    false);
             if (!getStateHistory().isEmpty()) {
                 HostStateHistoryEntry previousState = getStateHistory().get(getStateHistory().size() - 1);
                 if (previousState.getTime() == time) {

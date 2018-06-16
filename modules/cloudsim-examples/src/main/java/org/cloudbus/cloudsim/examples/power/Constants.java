@@ -19,12 +19,10 @@ public class Constants {
 	public final static boolean ENABLE_OUTPUT = true;
 	public final static boolean OUTPUT_CSV    = true;
 
-	public final static boolean IS_SWITCHING_ON_OFF_ENABLED = true;
-
 	public final static boolean ENABLE_CSV_HEADERS = true;
 
-	public final static double SCHEDULING_INTERVAL = 30;
-	public final static double SIMULATION_LIMIT = 577 * SCHEDULING_INTERVAL /*24 * 60 * 60*/;
+	public final static double SCHEDULING_INTERVAL = 300;
+	public final static double SIMULATION_LIMIT = 24 * 60 * 60;
 
 	public final static int CLOUDLET_LENGTH	= 2500 * (int) SIMULATION_LIMIT;
 	public final static int CLOUDLET_PES	= 1;

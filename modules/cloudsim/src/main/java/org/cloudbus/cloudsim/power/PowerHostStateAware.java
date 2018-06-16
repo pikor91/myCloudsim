@@ -173,4 +173,5 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 	private void addChangeStateEntry(double currentTime, HostState currentState, HostState destState, HostState afterTransitionState, double transitionEndTime) {
 		statelog.add(new HostStateAwareHistoryEntry(currentTime, currentState, destState, afterTransitionState, transitionEndTime));
 	}
+
 }

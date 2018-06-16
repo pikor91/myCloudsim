@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudbus.cloudsim.*;
+import org.cloudbus.cloudsim.examples.container.UtilizationModelPlanetLabInMemoryExtended;
 import org.cloudbus.cloudsim.examples.power.Constants;
 
 /**
@@ -52,7 +53,7 @@ public class PlanetLabHelper {
 						Constants.CLOUDLET_PES,
 						fileSize,
 						outputSize,
-						new UtilizationModelPonaszkiInMemory(
+						new UtilizationModelPlanetLabInMemory(
 								files[i].getAbsolutePath(),
 								Constants.SCHEDULING_INTERVAL), utilizationModelNull, utilizationModelNull);
 			} catch (Exception e) {

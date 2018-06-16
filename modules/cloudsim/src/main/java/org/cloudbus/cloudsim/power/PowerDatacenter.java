@@ -91,6 +91,29 @@ public class PowerDatacenter extends Datacenter {
 			System.out.print(currentTime + " ");
 
 			double minTime = updateCloudetProcessingWithoutSchedulingFutureEventsForce();
+			//todo number of hosts in transition.
+			if(isEnableSwithcingHostsState()){
+				List <? extends Host> activeHosts = getActiveHosts(getHostList());
+				List <? extends Host> inactiveHosts = getInactiveHosts(getHostList());
+				List <? extends Host> betweenHosts = getBetweenHosts(getHostList());
+				for(Host host : inactiveHosts){
+					PowerHost ph = (PowerHost) host;
+					if(!ph.getVmList().isEmpty() || !ph.getVmsMigratingIn().isEmpty() || ph.getUtilizationOfCpu()>0){
+						throw new IllegalStateException("inactive host with vm list not empty");
+					}
+				}
+
+				if (!betweenHosts.isEmpty()){
+
+					for(Host host : betweenHosts){
+						PowerHost ph = (PowerHost) host;
+						if(!ph.getVmList().isEmpty() || !ph.getVmsMigratingIn().isEmpty() || ph.getUtilizationOfCpu()>0){
+							throw new IllegalStateException("transition host with vm list not empty");
+						}
+					}
+					throw new IllegalStateException("There are hosts during transition.");
+				}
+			}
 
 			if (!isDisableMigrations()) {
 				List<Map<String, Object>> migrationMap = getVmAllocationPolicy().optimizeAllocation(
@@ -132,6 +155,7 @@ public class PowerDatacenter extends Datacenter {
 							// half of BW is for VM communication
 							// around 16 seconds for 1024 MB using 1 Gbit/s network
 							double delay = vm.getRam() / ((double) targetHost.getBw() / (2 * 8000));
+//							double delay = 180;
 
 							send(
 									getId(),
@@ -172,6 +196,39 @@ public class PowerDatacenter extends Datacenter {
 
 			setLastProcessTime(currentTime);
 		}
+	}
+
+	private List<? extends Host> getBetweenHosts(List<Host> hostList) {
+		List<Host> betweenHosts = new LinkedList<>();
+		for(Host h : hostList){
+			PowerHostStateAware ph = (PowerHostStateAware) h;
+			if(ph.isDuringTransition()){
+				betweenHosts.add(ph);
+			}
+		}
+		return betweenHosts;
+	}
+
+	private List<? extends Host> getInactiveHosts(List<Host> hostList) {
+		List<Host> inactiveHosts = new LinkedList<>();
+		for(Host h : hostList){
+			PowerHostStateAware ph = (PowerHostStateAware) h;
+			if(HostState.INACTIVE.equals(ph.getCurrentState()) && !ph.isDuringTransition()){
+				inactiveHosts.add(ph);
+			}
+		}
+		return inactiveHosts;
+	}
+
+	private List<? extends Host> getActiveHosts(List<Host> hostList) {
+		List<Host> activeHosts = new LinkedList<>();
+		for(Host h : hostList){
+			PowerHostStateAware ph = (PowerHostStateAware) h;
+			if(HostState.ACTIVE.equals(ph.getCurrentState()) && !ph.isDuringTransition()){
+				activeHosts.add(ph);
+			}
+		}
+		return activeHosts;
 	}
 
 	private void sendSwitchOffHost(PowerHostStateAware oldHost, double delay) {
