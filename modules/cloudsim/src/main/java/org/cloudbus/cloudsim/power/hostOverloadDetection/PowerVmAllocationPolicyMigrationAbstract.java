@@ -171,7 +171,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 				Vm vm = (Vm) migration.get("vm");
 				PowerHost newHost = (PowerHost) migration.get("host");
 				PowerHost oldHost = (PowerHost) vm.getHost();
-				double delay = countDelay(oldHost, newHost, vm );
+				double delay = countDelay(newHost, vm );
 				vmMigrationHistoryEntryList.add(new VmMigrationHistoryEntry(currentTime, oldHost.getId(), newHost.getId(), vm.getId(), delay));
 			}
 		}else{
@@ -179,7 +179,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		}
 	}
 
-	private double countDelay(PowerHost oldHost, PowerHost newHost, Vm vm) {
+	public double countDelay(PowerHost newHost, Vm vm) {
 		if(newHost == null){
 			throw new IllegalStateException("Cannot count delay time for migration, destination host is null");
 		}
@@ -420,7 +420,9 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		for (Vm vm : vmsToMigrate) {
 			PowerHost allocatedHost = findHostForVm(vm, excludedHosts);
 			if (allocatedHost != null) {
+				double availableMips = allocatedHost.getAvailableMips();
 				allocatedHost.vmCreate(vm);
+				double availableMips2 = allocatedHost.getAvailableMips();
 				Log.printConcatLine("VM #", vm.getId(), " allocated to host #", allocatedHost.getId());
 
 				Map<String, Object> migrate = new HashMap<String, Object>();

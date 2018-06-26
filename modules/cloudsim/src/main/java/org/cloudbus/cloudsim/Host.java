@@ -201,10 +201,11 @@ public class Host {
 		double currentRequestedMaxMips = vm.getCurrentRequestedMaxMips();
 		double availableMips = getVmScheduler().getAvailableMips();
 		double currentRequestedTotalMips = vm.getCurrentRequestedTotalMips();
-		return (peCapacity >= currentRequestedMaxMips
+		boolean result = (peCapacity >= currentRequestedMaxMips
 				&& availableMips >= currentRequestedTotalMips
-				&& getRamProvisioner().isSuitableForVm(vm, vm.getCurrentRequestedRam()) && getBwProvisioner()
-				.isSuitableForVm(vm, vm.getCurrentRequestedBw()));
+				&& getRamProvisioner().isSuitableForVm(vm, vm.getCurrentRequestedRam())
+				&& getBwProvisioner().isSuitableForVm(vm, vm.getCurrentRequestedBw()));
+		return result;
 	}
 
 	/**
@@ -406,6 +407,20 @@ public class Host {
 		return totalAllocatedMips;
 	}
 
+	/**
+	 * Gets the total allocated MIPS for all VMs along all its PEs.
+	 *
+	 * @return the allocated mips for vm
+	 */
+	public double getTotalRequestedMips() {
+		List<Vm> vmList = getVmList();
+		double totalRequestedMips = 0.0;
+		for(Vm vm : vmList){
+			double totalAllocatedMipsForVm = getVmScheduler().getTotalAllocatedMipsForVm(vm);
+			totalRequestedMips+=totalAllocatedMipsForVm;
+		}
+		return totalRequestedMips;
+	}
 	/**
 	 * Returns the maximum available MIPS among all the PEs of the host.
 	 * 

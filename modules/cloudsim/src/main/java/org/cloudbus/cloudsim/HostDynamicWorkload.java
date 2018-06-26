@@ -77,9 +77,13 @@ public class HostDynamicWorkload extends Host {
 			double totalAllocatedMips = getVmScheduler().getTotalAllocatedMipsForVm(vm);
 
 			if (!Log.isDisabled()) {
+				int dstHostId = -1;
+				if(vm.getHost()!= null) {
+					dstHostId = vm.getHost().getId();
+				}
 				Log.formatLine(
 						"%.2f: [Host #" + getId() + "] Total allocated MIPS for VM #" + vm.getId()
-								+ " (Host #" + vm.getHost().getId()
+								+ " (Host #" + dstHostId
 								+ ") is %.2f, was requested %.2f out of total %.2f (%.2f%%)",
 						CloudSim.clock(),
 						totalAllocatedMips,
@@ -126,12 +130,16 @@ public class HostDynamicWorkload extends Host {
 			setUtilizationMips(getUtilizationMips() + totalAllocatedMips);
 			hostTotalRequestedMips += totalRequestedMips;
 		}
-
+		double utilizationMips = getUtilizationMips();
+		boolean isActive = (getUtilizationMips() > 0);
+		if(utilizationMips < hostTotalRequestedMips){
+			Log.printConcatLine("Host #"+ getId() + " is over Requested");
+		}
 		addStateHistoryEntry(
 				currentTime,
-				getUtilizationMips(),
+				utilizationMips,
 				hostTotalRequestedMips,
-				(getUtilizationMips() > 0),
+				isActive,
 				null,
 				false
 				);

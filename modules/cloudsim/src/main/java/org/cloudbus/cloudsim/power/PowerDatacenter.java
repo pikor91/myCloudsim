@@ -172,8 +172,17 @@ public class PowerDatacenter extends Datacenter {
 							if(targetHost != null) {
 								targetHost.addMigratingInVm(vm);
 								incrementMigrationCount();
+								if(((PowerHostStateAware)targetHost).isActive()){
+									double delay = countDelay(targetHost, vm);
+									send(
+											getId(),
+											delay,
+											CloudSimTags.VM_MIGRATE,
+											migrate);
+								}else{
+									sendSwitchOnHost(targetHost, vm, 0);
+								}
 
-								sendSwitchOnHost(targetHost, vm, 0);
 
 //								Log.printConcatLine("%d: target host #%d is turned off. Sending switching on event. ", currentTime, targetHost.getId());
 //								double delay = (vm.getRam() / ((double) targetHost.getBw() / (2 * 8000)));
@@ -198,6 +207,39 @@ public class PowerDatacenter extends Datacenter {
 		}
 	}
 
+	public double countDelay(PowerHost newHost, Vm vm) {
+		if(newHost == null){
+			throw new IllegalStateException("Cannot count delay time for migration, destination host is null");
+		}
+		PowerHostStateAware nh = (PowerHostStateAware) newHost;
+		double transferTime = vm.getRam() / ((double) nh.getBw() / (2 * 8000));
+		double delay = -1;
+		if(Consts.ENABLE_HS) {
+			if (nh.isInactive() && !nh.isDuringTransition()) {
+				//jeżeli jest wyłączony
+				double switchOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
+				delay = switchOnTime + transferTime;
+			} else if (nh.isInactive() && nh.isDuringTransition()) {
+				//jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i zmigrować tam VM
+				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
+				delay = endTransitionDuration + transferTime;
+			} else if (nh.isActive() && !nh.isDuringTransition()) {
+				//jezeli jest wlaczony
+				delay = transferTime;
+			} else if (nh.isActive() && nh.isDuringTransition()) {
+				//jeżeli jest wlaczony i w trakciewylaczania
+				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
+				double turnOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
+				delay = endTransitionDuration + turnOnTime + transferTime;
+			} else {
+				Log.printConcatLine("UnexpectedState during turning on host #%d", nh.getId());
+				System.exit(0);
+			}
+		}else{
+			delay = transferTime;
+		}
+		return delay;
+	}
 	private List<? extends Host> getBetweenHosts(List<Host> hostList) {
 		List<Host> betweenHosts = new LinkedList<>();
 		for(Host h : hostList){
