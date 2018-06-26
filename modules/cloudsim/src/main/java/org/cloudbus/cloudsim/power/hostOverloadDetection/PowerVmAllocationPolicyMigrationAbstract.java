@@ -102,6 +102,9 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * added by ponaszki
 	 */
 	private LinkedList<Integer> activeHostsNumber = new LinkedList<>();
+
+	private LinkedList<Integer> transitionHostsNumber = new LinkedList<>();
+
 	private List<PowerHost> underUtilizedHostList;
 
 	/**
@@ -223,9 +226,10 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 			List<PowerHostUtilizationHistory> overUtilizedHosts) {
 		List<Map<String, Object>> migrationMap = new LinkedList<Map<String, Object>>();
 		List<PowerHost> switchedOffHosts = getSwitchedOffHosts();
-
+		List<PowerHost> transitionHosts = getTransitionHosts();
 		activeHostsTime.add(CloudSim.clock());
 		activeHostsNumber.add(getHostList().size()-switchedOffHosts.size());
+		transitionHostsNumber.add(transitionHosts.size());
 
 		// over-utilized hosts + hosts that are selected to migrate VMs to from over-utilized hosts
 		Set<PowerHost> excludedHostsForFindingUnderUtilizedHost = new HashSet<PowerHost>();
@@ -522,9 +526,15 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		if(Consts.ENABLE_HS){
 			for (PowerHost host : this.<PowerHost> getHostList()) {
 				PowerHostStateAware h = (PowerHostStateAware) host;
-				if (host.getUtilizationOfCpu() == 0 && h.isInactive()) {
+				if (host.getUtilizationOfCpu() == 0 /*&& h.isInactive()*/) {
+					if(h.isInactive()){
+
+					}else{
+						Log.printConcatLine("Aktywny host z zero utylizacji");
+					}
 					switchedOffHosts.add(host);
 				}
+
 			}
 		}else{
 			for (PowerHost host : this.<PowerHost> getHostList()) {
@@ -535,6 +545,19 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 			}
 		}
 		return switchedOffHosts;
+	}
+
+	protected List<PowerHost> getTransitionHosts() {
+		List<PowerHost> transitionHosts = new LinkedList<PowerHost>();
+		if(Consts.ENABLE_HS){
+			for (PowerHost host : this.<PowerHost> getHostList()) {
+				PowerHostStateAware h = (PowerHostStateAware) host;
+				if (h.isDuringTransition()) {
+					transitionHosts.add(host);
+				}
+			}
+		}
+		return transitionHosts;
 	}
 
 
@@ -876,5 +899,9 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 			}
 		}
 		return list;
+	}
+
+	public LinkedList<Integer> getTransitionHostsNumber() {
+		return transitionHostsNumber;
 	}
 }

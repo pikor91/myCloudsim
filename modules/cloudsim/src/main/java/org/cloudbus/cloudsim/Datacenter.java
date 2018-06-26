@@ -668,10 +668,10 @@ public class Datacenter extends SimEntity {
 				Log.printConcatLine("Turning off host # "+  ph.getId() +" is finished");
 			}else if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(endState)){
 				Log.printConcatLine("Turning on host # "+ ph.getId() +" is finished" );
-				double delay = vm.getHost().getRam() / ((double) ph.getBw() / (2 * 8000));
-				send(getId(),
-						delay,
-						CloudSimTags.VM_MIGRATE, args);
+//				double delay = vm.getHost().getRam() / ((double) ph.getBw() / (2 * 8000));
+//				send(getId(),
+//						delay,
+//						CloudSimTags.VM_MIGRATE, args);
 			}
 		}
 	}

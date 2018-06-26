@@ -86,10 +86,10 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 	public double getEnergyLinearInterpolation(double fromUtilization, double toUtilization, double time) {
 		if(isActive()) {
 			return super.getEnergyLinearInterpolation(fromUtilization, toUtilization, time);
-		}else if(HostState.INACTIVE.equals(currentState) && duringTransition){
+		}else if(HostState.INACTIVE.equals(currentState) && !duringTransition){
 			return 0;
 		}else {
-			return getPower(1.0);
+			return super.getEnergyLinearInterpolation(1.0, 1.0, time);
 		}
 	}
 

@@ -91,29 +91,8 @@ public class PowerDatacenter extends Datacenter {
 			System.out.print(currentTime + " ");
 
 			double minTime = updateCloudetProcessingWithoutSchedulingFutureEventsForce();
-			//todo number of hosts in transition.
-			if(isEnableSwithcingHostsState()){
-				List <? extends Host> activeHosts = getActiveHosts(getHostList());
-				List <? extends Host> inactiveHosts = getInactiveHosts(getHostList());
-				List <? extends Host> betweenHosts = getBetweenHosts(getHostList());
-				for(Host host : inactiveHosts){
-					PowerHost ph = (PowerHost) host;
-					if(!ph.getVmList().isEmpty() || !ph.getVmsMigratingIn().isEmpty() || ph.getUtilizationOfCpu()>0){
-						throw new IllegalStateException("inactive host with vm list not empty");
-					}
-				}
 
-				if (!betweenHosts.isEmpty()){
-
-					for(Host host : betweenHosts){
-						PowerHost ph = (PowerHost) host;
-						if(!ph.getVmList().isEmpty() || !ph.getVmsMigratingIn().isEmpty() || ph.getUtilizationOfCpu()>0){
-							throw new IllegalStateException("transition host with vm list not empty");
-						}
-					}
-					throw new IllegalStateException("There are hosts during transition.");
-				}
-			}
+			checkHostsState();
 
 			if (!isDisableMigrations()) {
 				List<Map<String, Object>> migrationMap = getVmAllocationPolicy().optimizeAllocation(
@@ -180,6 +159,12 @@ public class PowerDatacenter extends Datacenter {
 											CloudSimTags.VM_MIGRATE,
 											migrate);
 								}else{
+									double delay = countDelay(targetHost, vm);
+									send(
+											getId(),
+											delay,
+											CloudSimTags.VM_MIGRATE,
+											migrate);
 									sendSwitchOnHost(targetHost, vm, 0);
 								}
 
@@ -205,6 +190,32 @@ public class PowerDatacenter extends Datacenter {
 
 			setLastProcessTime(currentTime);
 		}
+	}
+
+	private void checkHostsState() {
+		//todo number of hosts in transition.
+		if(isEnableSwithcingHostsState()){
+            List<? extends Host> activeHosts = getActiveHosts(getHostList());
+            List <? extends Host> inactiveHosts = getInactiveHosts(getHostList());
+            List <? extends Host> betweenHosts = getBetweenHosts(getHostList());
+            for(Host host : inactiveHosts){
+                PowerHost ph = (PowerHost) host;
+                if(!ph.getVmList().isEmpty() || !ph.getVmsMigratingIn().isEmpty() || ph.getUtilizationOfCpu()>0){
+                    throw new IllegalStateException("inactive host with vm list not empty");
+                }
+            }
+
+            if (!betweenHosts.isEmpty()){
+
+                for(Host host : betweenHosts){
+                    PowerHost ph = (PowerHost) host;
+                    if(!ph.getVmList().isEmpty() || !ph.getVmsMigratingIn().isEmpty() || ph.getUtilizationOfCpu()>0){
+                        throw new IllegalStateException("transition host with vm list not empty");
+                    }
+                }
+                throw new IllegalStateException("There are hosts during transition.");
+            }
+        }
 	}
 
 	public double countDelay(PowerHost newHost, Vm vm) {
@@ -438,6 +449,14 @@ public class PowerDatacenter extends Datacenter {
 
 		Vm vm = (Vm) migrate.get("vm");
 		Host sourceHost = vm.getHost();
+
+		if(isEnableSwithcingHostsState()){
+			PowerHostStateAware destHost = (PowerHostStateAware) migrate.get("host");
+			if(destHost.isInactive()){
+				throw new IllegalStateException("["+CloudSim.clock()+"]"+" Attempt of vm migration to host #"+destHost.getId()+
+				"in state "+ destHost.getCurrentState()+", isDuringTransition: " + destHost.isDuringTransition() +", endTime:"+destHost.getTransitionEndTime()+".");
+			}
+		}
 		boolean allocationSuccessfull = super.processVmMigrate(ev, ack);
 
 		if(allocationSuccessfull && isEnableSwithcingHostsState()){

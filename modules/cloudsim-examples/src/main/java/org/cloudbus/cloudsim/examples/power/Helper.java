@@ -629,10 +629,11 @@ public class Helper {
     private static void writeActiveHostNumber(PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
 		LinkedList<Double> activeHostsTime = vmAllocationPolicy.getActiveHostsTime();
         LinkedList<Integer> activeHostsNumber = vmAllocationPolicy.getActiveHostsNumber();
+        LinkedList<Integer> transitionHostsNumber = vmAllocationPolicy.getTransitionHostsNumber();
         LinkedList<String> lines = new LinkedList<>();
         double avg = 0;
         for(int i = 0; i < activeHostsTime.size(); i++){
-		    lines.add(String.format("%.2f;%d\n", activeHostsTime.get(i), activeHostsNumber.get(i)));
+		    lines.add(String.format("%.2f;%d;%d\n", activeHostsTime.get(i), activeHostsNumber.get(i), transitionHostsNumber.get(i)));
 		    avg = avg + activeHostsNumber.get(i);
         }
         avg = avg / activeHostsNumber.size();
