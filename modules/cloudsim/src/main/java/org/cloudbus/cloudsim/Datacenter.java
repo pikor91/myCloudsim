@@ -574,6 +574,9 @@ public class Datacenter extends SimEntity {
 			PowerHostStateAware host = (PowerHostStateAware) dataMap.get(Consts.HOST);
 			HostState startState = (HostState) dataMap.get(Consts.START_STATE);
 			HostState endState = (HostState) dataMap.get(Consts.END_STATE);
+			if(host.getId()==0){
+				Log.printConcatLine("cotojest");
+			}
 			if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(endState)){
 				handleTurningOffHost(dataMap);
 			}else if(HostState.INACTIVE.equals(startState) && HostState.ACTIVE.equals(endState)){
@@ -593,21 +596,21 @@ public class Datacenter extends SimEntity {
 		args.put(Consts.VM, vm);
 		args.put(Consts.START_STATE, startState);
 		args.put(Consts.END_STATE, endState);
-		if(host.getId()==8){
+		if(host.getId()==0){
 			Log.printConcatLine("cotojest");
 		}
-		if(host.isInactive() && !host.isDuringTransition()){
+		if(host.isInactiveState() && !host.isDuringTransition()){
             //jeżeli jest wyłączony
             host.startTransition(endState, getLastProcessTime());
             send(getId(), host.getPowerModel().getTransitionTime(startState, endState), CloudSimTags.HOST_CHANGE_STATE_END, args);
-        } else if(host.isInactive() && host.isDuringTransition()){
+        } else if(host.isInactiveState() && host.isDuringTransition()){
             //jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i zmigrować tam VM
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
-        }else if(host.isActive() && !host.isDuringTransition()){
+        }else if(host.isActiveState() && !host.isDuringTransition()){
             //jeżeli jest włączony (co nie powinno się nigdy stać)
             Log.printConcatLine(CloudSim.clock()+ ": Attempt of switching on host #"+host.getId()+" which is already switched on" );
             send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_END, args);
-        }else if(host.isActive() && host.isDuringTransition()) {
+        }else if(host.isActiveState() && host.isDuringTransition()) {
             Log.printConcatLine(CloudSim.clock()+ ": Attempt of switching on host #"+host.getId()+" which is already during switching off");
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
         }else{
@@ -628,19 +631,21 @@ public class Datacenter extends SimEntity {
 		args.put(Consts.VM, vm);
 		args.put(Consts.START_STATE, startState);
 		args.put(Consts.END_STATE, endState);
-		if(host.isInactive() && !host.isDuringTransition()){
+		if(host.getId()==0){
+			Log.printConcatLine("cotojest");
+		}
+		if(host.isInactiveState() && !host.isDuringTransition()){
             //jeżeli jest wyłączony
-//					host.startTransition(endState, getLastProcessTime());
             send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_END, args);
-        } else if(host.isInactive() && host.isDuringTransition()){
+        } else if(host.isInactiveState() && host.isDuringTransition()){
             //jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i go wyłączyć
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
-        }else if(host.isActive() && !host.isDuringTransition()){
+        }else if(host.isActiveState() && !host.isDuringTransition()){
             //jeżeli jest włączony
             Log.printConcatLine(CloudSim.clock()+": Attempt of switching of host #"+host.getId()+" which is already switched on");
-            host.startTransition(endState, CloudSim.clock());
+            host.startTransition(HostState.INACTIVE, CloudSim.clock());
             send(getId(), host.getPowerModel().getTransitionTime(startState, endState), CloudSimTags.HOST_CHANGE_STATE_END, args);
-        }else if(host.isActive() && host.isDuringTransition()) {
+        }else if(host.isActiveState() && host.isDuringTransition()) {
             //jezeli host jest wlaczoy i się wyłącza
             Log.printConcatLine(CloudSim.clock()+ ":Attempt of switching of host #"+host.getId()+" which is already during switching off");
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
@@ -666,6 +671,9 @@ public class Datacenter extends SimEntity {
 			HostState startState = (HostState) args.get(Consts.START_STATE);
 			HostState endState = (HostState) args.get(Consts.END_STATE);
 
+			if(ph.getId()==0){
+				Log.printConcatLine("cotojest");
+			}
 			ph.endTransition(CloudSim.clock());
 			if(HostState.ACTIVE.equals(startState) && HostState.INACTIVE.equals(endState)) {
 				Log.printConcatLine("Turning off host # "+  ph.getId() +" is finished");

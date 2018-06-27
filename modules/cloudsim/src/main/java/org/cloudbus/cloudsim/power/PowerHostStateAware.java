@@ -135,12 +135,18 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 	public boolean isActive(){
 		return HostState.ACTIVE.equals(currentState) && !isDuringTransition();
 	}
+	public boolean isActiveState(){
+		return HostState.ACTIVE.equals(currentState);
+	}
 
 
 	public boolean isInactive(){
 		return HostState.INACTIVE.equals(currentState) || isDuringTransition();
 	}
 
+	public boolean isInactiveState(){
+		return HostState.INACTIVE.equals(currentState);
+	}
 
 	public HostState getCurrentState() {
 		return currentState;

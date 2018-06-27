@@ -92,11 +92,14 @@ public class PowerDatacenter extends Datacenter {
 
 			double minTime = updateCloudetProcessingWithoutSchedulingFutureEventsForce();
 
-			checkHostsState();
+//			checkHostsState();
 //			if(isEnableSwithcingHostsState()){
 //				todo wylaczanie nieaktywnych
 //				List<Host> inactiveList = findInactiveHosts(null);
 //				for(Host h : inactiveList){
+//					if(h.getId()==0){
+//						Log.printConcatLine("cotojest");
+//					}
 //					sendSwitchOff(h);
 //				}
 //			}
@@ -157,7 +160,7 @@ public class PowerDatacenter extends Datacenter {
 							if(targetHost != null) {
 								targetHost.addMigratingInVm(vm);
 								incrementMigrationCount();
-								if(targetHost.getId()==8){
+								if(targetHost.getId()==0){
 									Log.printConcatLine("cotojest");
 								}
 								if(((PowerHostStateAware)targetHost).isActive()){
@@ -192,7 +195,7 @@ public class PowerDatacenter extends Datacenter {
 						//todo wylaczanie nieaktywnych
 						List<Host> inactiveList = findInactiveHosts(migrationMap);
 						for(Host h : inactiveList){
-							if(h.getId()==8){
+							if(h.getId()==0){
 								Log.printConcatLine("cotoJest");
 							}
 							sendSwitchOff(h);
@@ -274,19 +277,20 @@ public class PowerDatacenter extends Datacenter {
 		double transferTime = vm.getRam() / ((double) nh.getBw() / (2 * 8000));
 		double delay = -1;
 		if(Consts.ENABLE_HS) {
-			if (nh.isInactive() && !nh.isDuringTransition()) {
+			if (nh.isInactiveState() && !nh.isDuringTransition()) {
 				//jeżeli jest wyłączony
 				double switchOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
 				delay = switchOnTime + transferTime;
-			} else if (nh.isInactive() && nh.isDuringTransition()) {
+			} else if (nh.isInactiveState() && nh.isDuringTransition()) {
 				//jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i zmigrować tam VM
 				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
 				delay = endTransitionDuration + transferTime;
-			} else if (nh.isActive() && !nh.isDuringTransition()) {
+			} else if (nh.isActiveState() && !nh.isDuringTransition()) {
 				//jezeli jest wlaczony
 				delay = transferTime;
-			} else if (nh.isActive() && nh.isDuringTransition()) {
+			} else if (nh.isActiveState() && nh.isDuringTransition()) {
 				//jeżeli jest wlaczony i w trakciewylaczania
+
 				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
 				double turnOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
 				delay = endTransitionDuration + turnOnTime + transferTime;
@@ -539,6 +543,9 @@ public class PowerDatacenter extends Datacenter {
 		int sourceMigratingInListSize = sourceHost.getVmsMigratingIn().size();
 		if( sourceVmListSize == 0 && sourceMigratingInListSize == 0 &&  isEnableSwithcingHostsState()){
 			Map<String, Object> args = getArgs(sourceHost, HostState.ACTIVE, HostState.INACTIVE, null);
+			PowerHostStateAware host = (PowerHostStateAware) sourceHost;
+//			host.startTransition(HostState.INACTIVE, CloudSim.clock());
+			host.getPowerModel().getTransitionTime(HostState.ACTIVE, HostState.INACTIVE);
 			send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_START, args);
 		}else{
 			throw new IllegalStateException("tried to switch of host #"+ sourceHost.getId()+ "but it is not empty");

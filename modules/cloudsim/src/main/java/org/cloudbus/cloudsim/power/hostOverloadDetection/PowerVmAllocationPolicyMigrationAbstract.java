@@ -190,18 +190,18 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		double transferTime = vm.getRam() / ((double) nh.getBw() / (2 * 8000));
 		double delay = -1;
 		if(Consts.ENABLE_HS) {
-			if (nh.isInactive() && !nh.isDuringTransition()) {
+			if (nh.isInactiveState() && !nh.isDuringTransition()) {
 				//jeżeli jest wyłączony
 				double switchOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
 				delay = switchOnTime + transferTime;
-			} else if (nh.isInactive() && nh.isDuringTransition()) {
+			} else if (nh.isInactiveState() && nh.isDuringTransition()) {
 				//jeżeli już zaczal się włączać to trzeba poczekać aż się włączy i zmigrować tam VM
 				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
 				delay = endTransitionDuration + transferTime;
-			} else if (nh.isActive() && !nh.isDuringTransition()) {
+			} else if (nh.isActiveState() && !nh.isDuringTransition()) {
 				//jezeli jest wlaczony
 				delay = transferTime;
-			} else if (nh.isActive() && nh.isDuringTransition()) {
+			} else if (nh.isActiveState() && nh.isDuringTransition()) {
 				//jeżeli jest wlaczony i w trakciewylaczania
 				double endTransitionDuration = nh.getTransitionEndTime() - CloudSim.clock();
 				double turnOnTime = nh.getPowerModel().getTransitionTime(HostState.INACTIVE, HostState.ACTIVE);
