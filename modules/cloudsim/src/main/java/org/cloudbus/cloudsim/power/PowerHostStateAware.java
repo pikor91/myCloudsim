@@ -103,6 +103,7 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 			Log.printConcatLine("StartAnd dest currentState are the zame on host #", this.getId(), "can not start a transition;");
 		}
 		if(!duringTransition) {
+			Log.printConcatLine("Transition of host #"+getId()+" started");
 			duringTransition = true;
 			transitionEndTime = currentTime + getPowerModel().getTransitionTime(this.getCurrentState(), destinationState);
 			afterTransitionState = destinationState;
@@ -124,7 +125,7 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 			transitionEndTime = 0.0;
 			changeState(afterTransitionState);
 			afterTransitionState = null;
-
+			Log.printConcatLine("Transition of host #"+getId()+" ended");
 			return true;
 		}else{
 			Log.printConcatLine("Cannot end transition on host #", this.getId(), " TransitionEndTime ",transitionEndTime," not reached. Current time: ", currentTime);

@@ -93,7 +93,13 @@ public class PowerDatacenter extends Datacenter {
 			double minTime = updateCloudetProcessingWithoutSchedulingFutureEventsForce();
 
 			checkHostsState();
-
+//			if(isEnableSwithcingHostsState()){
+//				todo wylaczanie nieaktywnych
+//				List<Host> inactiveList = findInactiveHosts(null);
+//				for(Host h : inactiveList){
+//					sendSwitchOff(h);
+//				}
+//			}
 			if (!isDisableMigrations()) {
 				List<Map<String, Object>> migrationMap = getVmAllocationPolicy().optimizeAllocation(
 						getVmList());
@@ -151,6 +157,9 @@ public class PowerDatacenter extends Datacenter {
 							if(targetHost != null) {
 								targetHost.addMigratingInVm(vm);
 								incrementMigrationCount();
+								if(targetHost.getId()==8){
+									Log.printConcatLine("cotojest");
+								}
 								if(((PowerHostStateAware)targetHost).isActive()){
 									double delay = countDelay(targetHost, vm);
 									send(
@@ -179,6 +188,17 @@ public class PowerDatacenter extends Datacenter {
 						}
 
 					}
+					if(isEnableSwithcingHostsState()){
+						//todo wylaczanie nieaktywnych
+						List<Host> inactiveList = findInactiveHosts(migrationMap);
+						for(Host h : inactiveList){
+							if(h.getId()==8){
+								Log.printConcatLine("cotoJest");
+							}
+							sendSwitchOff(h);
+						}
+					}
+
 				}
 			}
 
@@ -192,8 +212,36 @@ public class PowerDatacenter extends Datacenter {
 		}
 	}
 
+	private List<Host> findInactiveHosts(List<Map<String, Object>> migrationMap) {
+		List<Host>hostsToSwitchOff = new ArrayList<>();
+		for(Host host : getHostList()){
+			PowerHostStateAware h = (PowerHostStateAware) host;
+			if (h.getUtilizationOfCpu() == 0 && h.isActive() && h.getVmList().size() == 0 ) {
+				Log.printConcatLine("Aktywny host z zero utylizacji. wyłączyć");
+				hostsToSwitchOff.add(host);
+			}
+		}
+		//checking if any of hostsToSwitchOff is a destination host to migration
+
+		Set<Host> destinations = new HashSet<>();
+		if(migrationMap!=null) {
+			for (Map<String, Object> entry : migrationMap) {
+				Host host = (Host) entry.get("host");
+				if (!destinations.contains(host)) {
+					destinations.add(host);
+				}
+			}
+		}
+
+		for(Host host : hostsToSwitchOff){
+			if(destinations.contains(host)){
+				throw new IllegalStateException("Host #"+host.getId()+" oznaczony do wyłączenia ale jest jako docelowy.");
+			}
+		}
+		return hostsToSwitchOff;
+	}
+
 	private void checkHostsState() {
-		//todo number of hosts in transition.
 		if(isEnableSwithcingHostsState()){
             List<? extends Host> activeHosts = getActiveHosts(getHostList());
             List <? extends Host> inactiveHosts = getInactiveHosts(getHostList());
@@ -453,15 +501,15 @@ public class PowerDatacenter extends Datacenter {
 		if(isEnableSwithcingHostsState()){
 			PowerHostStateAware destHost = (PowerHostStateAware) migrate.get("host");
 			if(destHost.isInactive()){
-				throw new IllegalStateException("["+CloudSim.clock()+"]"+" Attempt of vm migration to host #"+destHost.getId()+
-				"in state "+ destHost.getCurrentState()+", isDuringTransition: " + destHost.isDuringTransition() +", endTime:"+destHost.getTransitionEndTime()+".");
+				throw new IllegalStateException("["+CloudSim.clock()+"]"+" Attempt of vm" +vm.getId()+" migration to host #"+destHost.getId()+
+				" in state "+ destHost.getCurrentState()+", isDuringTransition: " + destHost.isDuringTransition() +", endTime: "+destHost.getTransitionEndTime()+".");
 			}
 		}
 		boolean allocationSuccessfull = super.processVmMigrate(ev, ack);
 
-		if(allocationSuccessfull && isEnableSwithcingHostsState()){
-			sendSwitchOffIfVmIsEmpty(sourceHost, ev);
-		}
+//		if(allocationSuccessfull && isEnableSwithcingHostsState()){
+//			sendSwitchOffIfVmIsEmpty(sourceHost, ev);
+//		}
 		SimEvent event = CloudSim.findFirstDeferred(getId(), new PredicateType(CloudSimTags.VM_MIGRATE));
 		if (event == null || event.eventTime() > CloudSim.clock()) {
 			updateCloudetProcessingWithoutSchedulingFutureEventsForce();
@@ -486,6 +534,17 @@ public class PowerDatacenter extends Datacenter {
 
 	}
 
+	private void sendSwitchOff(Host sourceHost) {
+		int sourceVmListSize = sourceHost.getVmList().size();
+		int sourceMigratingInListSize = sourceHost.getVmsMigratingIn().size();
+		if( sourceVmListSize == 0 && sourceMigratingInListSize == 0 &&  isEnableSwithcingHostsState()){
+			Map<String, Object> args = getArgs(sourceHost, HostState.ACTIVE, HostState.INACTIVE, null);
+			send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_START, args);
+		}else{
+			throw new IllegalStateException("tried to switch of host #"+ sourceHost.getId()+ "but it is not empty");
+		}
+
+	}
 	@Override
 	protected void processCloudletSubmit(SimEvent ev, boolean ack) {
 		super.processCloudletSubmit(ev, ack);

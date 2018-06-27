@@ -227,6 +227,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		List<Map<String, Object>> migrationMap = new LinkedList<Map<String, Object>>();
 		List<PowerHost> switchedOffHosts = getSwitchedOffHosts();
 		List<PowerHost> transitionHosts = getTransitionHosts();
+
 		activeHostsTime.add(CloudSim.clock());
 		activeHostsNumber.add(getHostList().size()-switchedOffHosts.size());
 		transitionHostsNumber.add(transitionHosts.size());
@@ -528,11 +529,11 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 				PowerHostStateAware h = (PowerHostStateAware) host;
 				if (host.getUtilizationOfCpu() == 0 /*&& h.isInactive()*/) {
 					if(h.isInactive()){
-
+//						Log.printConcatLine("Nieaktywny host z zero utylizacji");					switchedOffHosts.add(host);
+						switchedOffHosts.add(host);
 					}else{
-						Log.printConcatLine("Aktywny host z zero utylizacji");
+//						Log.printConcatLine("Aktywny host z zero utylizacji");
 					}
-					switchedOffHosts.add(host);
 				}
 
 			}

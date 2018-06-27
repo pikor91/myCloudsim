@@ -593,6 +593,9 @@ public class Datacenter extends SimEntity {
 		args.put(Consts.VM, vm);
 		args.put(Consts.START_STATE, startState);
 		args.put(Consts.END_STATE, endState);
+		if(host.getId()==8){
+			Log.printConcatLine("cotojest");
+		}
 		if(host.isInactive() && !host.isDuringTransition()){
             //jeżeli jest wyłączony
             host.startTransition(endState, getLastProcessTime());
@@ -602,10 +605,10 @@ public class Datacenter extends SimEntity {
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
         }else if(host.isActive() && !host.isDuringTransition()){
             //jeżeli jest włączony (co nie powinno się nigdy stać)
-            Log.printConcatLine("Attempt of switching on host #"+host.getId()+" which is already switched on" );
+            Log.printConcatLine(CloudSim.clock()+ ": Attempt of switching on host #"+host.getId()+" which is already switched on" );
             send(getId(), 0, CloudSimTags.HOST_CHANGE_STATE_END, args);
         }else if(host.isActive() && host.isDuringTransition()) {
-            Log.printConcatLine("Attempt of switching on host #"+host.getId()+" which is already during switching off");
+            Log.printConcatLine(CloudSim.clock()+ ": Attempt of switching on host #"+host.getId()+" which is already during switching off");
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
         }else{
             Log.printConcatLine("UnexpectedState during turning on host #%d", host.getId());
@@ -634,12 +637,12 @@ public class Datacenter extends SimEntity {
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_START, args);
         }else if(host.isActive() && !host.isDuringTransition()){
             //jeżeli jest włączony
-            Log.printConcatLine("Attempt of switching of host #%d which is already switched on", host.getId());
+            Log.printConcatLine(CloudSim.clock()+": Attempt of switching of host #"+host.getId()+" which is already switched on");
             host.startTransition(endState, CloudSim.clock());
             send(getId(), host.getPowerModel().getTransitionTime(startState, endState), CloudSimTags.HOST_CHANGE_STATE_END, args);
         }else if(host.isActive() && host.isDuringTransition()) {
             //jezeli host jest wlaczoy i się wyłącza
-            Log.printConcatLine("Attempt of switching of host #%d which is already during switching off", host.getId());
+            Log.printConcatLine(CloudSim.clock()+ ":Attempt of switching of host #"+host.getId()+" which is already during switching off");
             send(getId(), host.getTransitionEndTime(), CloudSimTags.HOST_CHANGE_STATE_END, args);
         }else{
             Log.printConcatLine("UnexpectedState during turning off host #%d", host.getId());
