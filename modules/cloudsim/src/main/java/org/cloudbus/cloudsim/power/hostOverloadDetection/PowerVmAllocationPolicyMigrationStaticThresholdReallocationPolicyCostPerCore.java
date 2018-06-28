@@ -42,17 +42,18 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyCo
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
-	 *
-	 * @param hostList the host list
+	 *  @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param utilizationThreshold the utilization threshold
+	 * @param activeFirst
 	 */
 	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyCostPerCore(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
-		super(hostList, vmSelectionPolicy, utilizationThreshold);
+			double utilizationThreshold, boolean activeFirst) {
+		super(hostList, vmSelectionPolicy, utilizationThreshold, activeFirst);
 		setUtilizationThreshold(utilizationThreshold);
+		setAvtiveFirst(activeFirst);
 	}
 
 	/**

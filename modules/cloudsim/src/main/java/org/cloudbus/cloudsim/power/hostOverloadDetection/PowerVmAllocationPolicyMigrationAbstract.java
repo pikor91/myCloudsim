@@ -105,7 +105,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 
 	private LinkedList<Integer> activeHostsNumberNew = new LinkedList<>();
 
-	private List<PowerHost> underUtilizedHostList;
+	private boolean avtiveFirst = false;
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationAbstract.
@@ -892,29 +892,15 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		return activeHostsNumber;
 	}
 
-	public List<PowerHost> getInactiveHosts() {
-		List<PowerHost> inactiveHosts = new LinkedList<>();
-		for(Host host : getHostList()){
-			PowerHostStateAware h = (PowerHostStateAware) host;
-			if(h.isInactive()){
-				inactiveHosts.add((PowerHostUtilizationHistory) host);
-			}
-		}
-		return inactiveHosts;
-	}
-
-	public List<PowerHost> getMarkedUnderUtilizedHosts() {
-		List<PowerHost> list = new ArrayList<>();
-		for(Host host :this.getHostList()){
-			PowerHostStateAware h = (PowerHostStateAware) host;
-			if(h.isUnderUtilized()){
-				list.add(h);
-			}
-		}
-		return list;
-	}
-
 	public LinkedList<Integer> getActiveHostsNumberNew() {
 		return activeHostsNumberNew;
+	}
+
+	public boolean isAvtiveFirst() {
+		return avtiveFirst;
+	}
+
+	public void setAvtiveFirst(boolean avtiveFirst) {
+		this.avtiveFirst = avtiveFirst;
 	}
 }

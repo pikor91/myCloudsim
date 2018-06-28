@@ -36,10 +36,12 @@ public class MadMc {
 		String vmAllocationPolicy = "mad"; // Median Absolute Deviation (MAD) VM allocation policy
 		String vmSelectionPolicy = "mc"; // Maximum Correlation (MC) VM selection policy
 		String parameter = "2.5"; // the safety parameter of the MAD policy
+		boolean activeFirst = false;
 
 		new RandomRunner(
 				enableOutput,
 				outputToFile,
+				activeFirst,
 				inputFolder,
 				outputFolder,
 				workload,

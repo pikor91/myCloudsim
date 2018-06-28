@@ -11,6 +11,7 @@ package org.cloudbus.cloudsim.power.hostOverloadDetection;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
+import org.cloudbus.cloudsim.power.PowerHostStateAware;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
 
 import java.util.List;
@@ -42,17 +43,18 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicySt
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
-	 *
-	 * @param hostList the host list
+	 *  @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param utilizationThreshold the utilization threshold
+	 * @param activeFirst
 	 */
 	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyStripping(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
-		super(hostList, vmSelectionPolicy, utilizationThreshold);
+			double utilizationThreshold, boolean activeFirst) {
+		super(hostList, vmSelectionPolicy, utilizationThreshold, activeFirst);
 		setUtilizationThreshold(utilizationThreshold);
+		setAvtiveFirst(activeFirst);
 	}
 
 
@@ -65,11 +67,29 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicySt
 		return utilizationThreshold;
 	}
 
+
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
+		if(!isAvtiveFirst()){
+			PowerHost hostForVmAll = findHostForVmFromPassed(vm, getHostList(), excludedHosts);
+			return hostForVmAll;
+		}else{
+			List<? extends Host> activeHosts = getActiveHosts();
+			PowerHost hostForVmActive = findHostForVmFromPassed(vm, activeHosts, excludedHosts);
+			if(hostForVmActive==null){
+				List<? extends Host> inactiveHosts = getInactiveHosts();
+				hostForVmActive = findHostForVmFromPassed(vm, inactiveHosts, excludedHosts);
+			}
+			return hostForVmActive;
+		}
+	}
+
+	private PowerHost findHostForVmFromPassed(Vm vm, List<? extends Host> possibleDestHosts, Set<? extends Host> excludedHosts) {
 		int minimalVmPerHost = Integer.MAX_VALUE;
 		PowerHost allocatedHost = null;
-		for(PowerHost host : this.<PowerHost>getHostList()){
+		for(Host h : possibleDestHosts){
+			PowerHost host = (PowerHost) h;
+			PowerHostStateAware hostStateAware = (PowerHostStateAware) host;
 			if(excludedHosts.contains(host)){
 				continue;
 			}
@@ -94,4 +114,5 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicySt
 		}
 		return allocatedHost;
 	}
+
 }

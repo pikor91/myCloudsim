@@ -9,7 +9,6 @@
 package org.cloudbus.cloudsim.power.hostOverloadDetection;
 
 import org.cloudbus.cloudsim.Host;
-import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
@@ -43,24 +42,41 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyPa
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
-	 *
-	 * @param hostList the host list
+	 *  @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param utilizationThreshold the utilization threshold
+	 * @param activeFirst
 	 */
 	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyPacking(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
-		super(hostList, vmSelectionPolicy, utilizationThreshold);
+			double utilizationThreshold, boolean activeFirst) {
+		super(hostList, vmSelectionPolicy, utilizationThreshold, activeFirst);
 		setUtilizationThreshold(utilizationThreshold);
+		setAvtiveFirst(activeFirst);
 	}
 
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
+		if(!isAvtiveFirst()){
+			PowerHost hostForVmAll = findHostForVmFromPassed(vm, getHostList(), excludedHosts);
+			return hostForVmAll;
+		}else{
+			List<? extends Host> activeHosts = getActiveHosts();
+			PowerHost hostForVmActive = findHostForVmFromPassed(vm, activeHosts, excludedHosts);
+			if(hostForVmActive==null){
+				List<? extends Host> inactiveHosts = getInactiveHosts();
+				hostForVmActive = findHostForVmFromPassed(vm, inactiveHosts, excludedHosts);
+			}
+			return hostForVmActive;
+		}
+	}
+
+	private PowerHost findHostForVmFromPassed(Vm vm, List<? extends Host> destHosts, Set<? extends Host> excludedHosts) {
 		int maximalVmPerHost = Integer.MIN_VALUE;
 		PowerHost allocatedHost = null;
-		for(PowerHost host : this.<PowerHost>getHostList()){
+		for(Host h : destHosts){
+			PowerHost host = (PowerHost) h;
 			if(excludedHosts.contains(host)){
 				continue;
 			}

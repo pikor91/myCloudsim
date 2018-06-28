@@ -36,10 +36,12 @@ public class IqrMmt {
 		String vmAllocationPolicy = "iqr"; // Inter Quartile Range (IQR) VM allocation policy
 		String vmSelectionPolicy = "mmt"; // Minimum Migration Time (MMT) VM selection policy
 		String parameter = "1.5"; // the safety parameter of the IQR policy
+		boolean activeFirst = false;
 
 		new RandomRunner(
 				enableOutput,
 				outputToFile,
+				activeFirst,
 				inputFolder,
 				outputFolder,
 				workload,

@@ -42,6 +42,7 @@ public class IqrMc {
 		new PlanetLabRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

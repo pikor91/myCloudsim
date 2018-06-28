@@ -40,6 +40,7 @@ public class LrrMmt {
 		new RandomRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

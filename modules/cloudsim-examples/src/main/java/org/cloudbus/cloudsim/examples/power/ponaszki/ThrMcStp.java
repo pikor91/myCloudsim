@@ -27,6 +27,7 @@ public class ThrMcStp {
 		new PonaszkiRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

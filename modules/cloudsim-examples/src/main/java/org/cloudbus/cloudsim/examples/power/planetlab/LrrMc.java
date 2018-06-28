@@ -42,6 +42,7 @@ public class LrrMc {
 		new PlanetLabRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

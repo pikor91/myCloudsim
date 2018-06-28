@@ -43,6 +43,7 @@ public class Dvfs {
 		new PlanetLabRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

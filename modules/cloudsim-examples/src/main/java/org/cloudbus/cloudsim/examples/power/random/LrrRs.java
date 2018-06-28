@@ -36,10 +36,12 @@ public class LrrRs {
 		String vmAllocationPolicy = "lrr"; // Local Regression Robust (LRR) VM allocation policy
 		String vmSelectionPolicy = "rs"; // Random Selection (RS) VM selection policy
 		String parameter = "1.2"; // the safety parameter of the LRR policy
+		boolean activeFirst = false;
 
 		new RandomRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

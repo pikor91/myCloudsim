@@ -50,8 +50,9 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyBe
 	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyBestFitDecreasing(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
-		super(hostList, vmSelectionPolicy, utilizationThreshold);
+			double utilizationThreshold,
+			boolean activeFirst) {
+		super(hostList, vmSelectionPolicy, utilizationThreshold, activeFirst);
 		setUtilizationThreshold(utilizationThreshold);
 	}
 

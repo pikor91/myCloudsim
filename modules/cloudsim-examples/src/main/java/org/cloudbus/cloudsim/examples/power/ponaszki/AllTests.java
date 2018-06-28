@@ -24,38 +24,40 @@ public class AllTests {
         String vmSelectionPolicy = "mmt"; // Maximum Correlation (MC) VM selection policy
         String vmReallocationPolicy = "lbCpuRatio";
         String parameter = "0.8"; // the static utilization threshold
+        boolean activeFirst = true;
 
         System.out.println("Vm selection policy cth");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "cth", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "cth", workload, parameter);
 
         System.out.println("Vm selection policy cuv");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "cuv", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "cuv", workload, parameter);
 
         System.out.println("Vm selection policy lvf");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "lvf", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "lvf", workload, parameter);
 
         System.out.println("Vm selection policy maxu");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "maxu", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "maxu", workload, parameter);
 
         System.out.println("Vm selection policy minu");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "minu", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "minu", workload, parameter);
 
         System.out.println("Vm selection policy mc");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "mc", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "mc", workload, parameter);
 
         System.out.println("Vm selection policy mmt");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "mmt", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "mmt", workload, parameter);
 
         System.out.println("Vm selection policy rs");
-        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "rs", workload, parameter);
+        simulateOneSelection(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, "rs", workload, parameter);
 
     }
 
-    private static void simulateOneSelection(boolean enableOutput, boolean outputToFile, String inputFolder, String outputFolder, String allocationPolicy, String vmSelectionPolicy, String workload, String parameter) {
+    private static void simulateOneSelection(boolean enableOutput, boolean outputToFile, boolean activeFirst, String inputFolder, String outputFolder, String allocationPolicy, String vmSelectionPolicy, String workload, String parameter) {
         System.out.println("Destination host selection policy lbCpuRatio");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
+                activeFirst,
                 inputFolder,
                 outputFolder,
                 workload,
@@ -66,6 +68,7 @@ public class AllTests {
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
+                activeFirst,
                 inputFolder,
                 outputFolder,
                 workload,
@@ -76,6 +79,7 @@ public class AllTests {
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
+                activeFirst,
                 inputFolder,
                 outputFolder,
                 workload,
@@ -86,6 +90,7 @@ public class AllTests {
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
+                activeFirst,
                 inputFolder,
                 outputFolder,
                 workload,
@@ -96,6 +101,7 @@ public class AllTests {
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
+                activeFirst,
                 inputFolder,
                 outputFolder,
                 workload,
@@ -106,6 +112,7 @@ public class AllTests {
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
+                activeFirst,
                 inputFolder,
                 outputFolder,
                 workload,

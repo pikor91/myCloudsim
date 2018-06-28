@@ -43,28 +43,45 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWa
 
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
-	 *
-	 * @param hostList the host list
+	 *  @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param utilizationThreshold the utilization threshold
+	 * @param activeFirst
 	 */
 	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreAbsolute(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
-		super(hostList, vmSelectionPolicy, utilizationThreshold);
+			double utilizationThreshold, boolean activeFirst) {
+		super(hostList, vmSelectionPolicy, utilizationThreshold, activeFirst);
 		setUtilizationThreshold(utilizationThreshold);
+		setAvtiveFirst(activeFirst);
 	}
 
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
+		if(!isAvtiveFirst()){
+			PowerHost hostForVmAll = findHostForVmFromPassed(vm, getHostList(), excludedHosts);
+			return hostForVmAll;
+		}else{
+			List<? extends Host> activeHosts = getActiveHosts();
+			PowerHost hostForVmActive = findHostForVmFromPassed(vm, activeHosts, excludedHosts);
+			if(hostForVmActive==null){
+				List<? extends Host> inactiveHosts = getInactiveHosts();
+				hostForVmActive = findHostForVmFromPassed(vm, inactiveHosts, excludedHosts);
+			}
+			return hostForVmActive;
+		}
+	}
+
+	public PowerHost findHostForVmFromPassed(Vm vm, List<? extends Host> possibleDestinationHosts, Set<? extends Host> excludedHosts) {
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
 		PowerHost sourceHost = (PowerHost) vm.getHost();
 		if(sourceHost == null){
 			Log.printConcatLine("SourceHost is null. Initial VM allocation.");
 		}
-		for (PowerHost host : this.<PowerHost> getHostList()) {
+		for (Host h : possibleDestinationHosts) {
+			PowerHost host = (PowerHost) h;
 			if (excludedHosts.contains(host)) {
 				continue;
 			}

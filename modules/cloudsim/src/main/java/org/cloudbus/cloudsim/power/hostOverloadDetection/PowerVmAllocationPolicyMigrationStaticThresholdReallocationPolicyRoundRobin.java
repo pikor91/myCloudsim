@@ -44,18 +44,19 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRo
 	private Iterator<PowerHost> iterator;
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
-	 *
-	 * @param hostList the host list
+	 *  @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
 	 * @param utilizationThreshold the utilization threshold
+	 * @param activeFirst
 	 */
 	public PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRoundRobin(
 			List<? extends Host> hostList,
 			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
-		super(hostList, vmSelectionPolicy, utilizationThreshold);
+			double utilizationThreshold, boolean activeFirst) {
+		super(hostList, vmSelectionPolicy, utilizationThreshold, activeFirst);
 		setUtilizationThreshold(utilizationThreshold);
 		iterator = Iterators.cycle((Iterable<PowerHost>) hostList);
+		setAvtiveFirst(activeFirst);
 	}
 
 
@@ -70,10 +71,25 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRo
 
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
+		if(!isAvtiveFirst()){
+			PowerHost hostForVmAll = findHostForVmFromPassed(vm, getHostList(), excludedHosts);
+			return hostForVmAll;
+		}else{
+			List<? extends Host> activeHosts = getActiveHosts();
+			PowerHost hostForVmActive = findHostForVmFromPassed(vm, activeHosts, excludedHosts);
+			if(hostForVmActive==null){
+				List<? extends Host> inactiveHosts = getInactiveHosts();
+				hostForVmActive = findHostForVmFromPassed(vm, inactiveHosts, excludedHosts);
+			}
+			return hostForVmActive;
+		}
+	}
+
+	public PowerHost findHostForVmFromPassed(Vm vm, List<? extends Host> destHosts, Set<? extends Host> excludedHosts) {
 
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
-		List<PowerHost> hostList = this.<PowerHost>getHostList();
+		List<PowerHost> hostList = (List<PowerHost>) destHosts;
 
 		PowerHost host;
 		int count = 0;

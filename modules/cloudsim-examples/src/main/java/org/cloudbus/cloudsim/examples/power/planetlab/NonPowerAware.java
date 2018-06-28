@@ -86,7 +86,8 @@ public class NonPowerAware {
 					lastClock,
 					experimentName,
 					Constants.OUTPUT_CSV,
-					outputFolder);
+					outputFolder,
+					false);
 
 		} catch (Exception e) {
 			e.printStackTrace();

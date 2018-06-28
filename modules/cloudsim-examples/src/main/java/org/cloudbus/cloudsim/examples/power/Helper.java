@@ -232,11 +232,12 @@ public class Helper {
 			double lastClock,
 			String experimentName,
 			boolean outputInCsv,
-			String outputFolder) {
+			String outputFolder,
+			boolean activeFirst) {
 		Log.enable();
 		List<Host> hosts = datacenter.getHostList();
 
-		String newExperimentName = modifyExperimentName(experimentName);
+		String newExperimentName = modifyExperimentName(experimentName, activeFirst);
 
 		int numberOfHosts = hosts.size();
 		int numberOfVms = vms.size();
@@ -476,13 +477,17 @@ public class Helper {
 		Log.setDisabled(true);
 	}
 
-	private static String modifyExperimentName(String experimentName) {
+	private static String modifyExperimentName(String experimentName, boolean activeFirst) {
 		StringBuilder sb = new StringBuilder();
 		if(Consts.ENABLE_HS) {
 			sb.append("1_");
 		}else{
 			sb.append("0_");
 		}
+		if(activeFirst) {
+			sb.append("AF_");
+		}
+
 		sb.append(experimentName);
 		return sb.toString();
 	}
@@ -1166,8 +1171,7 @@ public class Helper {
 	}
 
 
-	public static void makeStatsTable(
-			String outputFolder){
+	public static void makeStatsTable(String outputFolder){
 		String tablePath = outputFolder + "/stats/";
 		File finalTable = new File(tablePath +"final.csv");
 		if (!finalTable.exists()){
@@ -1201,7 +1205,8 @@ public class Helper {
 			}
 				if(currentFile.getName().contains("statsTable")) {
 					String[] split = currentFile.getName().split("_");
-					String name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
+					String name = getName(split);
+
 					String data = null;
 					try {
 						data = reader.readLine();
@@ -1212,7 +1217,7 @@ public class Helper {
 					}
 				}else if(currentFile.getName().contains("_stats")){
 					String[] split = currentFile.getName().split("_");
-					String name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
+					String name = getName(split);
 					String data=null;
 					try {
 						data = reader.readLine();
@@ -1246,5 +1251,15 @@ public class Helper {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static String getName(String[] split) {
+		String name = null;
+		if(split[1].equals("AF")){
+            name = split[0]+"_"+split[1] + "_"+split[3]+"_"+split[4]+"_"+split[5];
+        }else{
+			name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
+		}
+		return name;
 	}
 }

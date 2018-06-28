@@ -36,6 +36,7 @@ public class RandomRunner extends RunnerAbstract {
 	public RandomRunner(
 			boolean enableOutput,
 			boolean outputToFile,
+			boolean activeFirst,
 			String inputFolder,
 			String outputFolder,
 			String workload,
@@ -46,7 +47,7 @@ public class RandomRunner extends RunnerAbstract {
 		super(
 				enableOutput,
 				outputToFile,
-				inputFolder,
+                activeFirst, inputFolder,
 				outputFolder,
 				workload,
 				vmAllocationPolicy,
@@ -55,8 +56,8 @@ public class RandomRunner extends RunnerAbstract {
 				parameter);
 	}
 
-	public RandomRunner(boolean enableOutput, boolean outputToFile, String inputFolder, String outputFolder, String workload, String vmAllocationPolicy, String vmSelectionPolicy, String parameter) {
-		super(enableOutput, outputToFile, inputFolder, outputFolder, workload, vmAllocationPolicy, vmSelectionPolicy, null, parameter);
+	public RandomRunner(boolean enableOutput, boolean outputToFile, boolean activeFirst, String inputFolder, String outputFolder, String workload, String vmAllocationPolicy, String vmSelectionPolicy, String parameter) {
+		super(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, workload, vmAllocationPolicy, vmSelectionPolicy, null, parameter);
 	}
 
 	/*

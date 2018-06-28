@@ -47,6 +47,7 @@ public class PlanetLabRunnerConsole {
 		new PlanetLabRunner(
 				enableOutput,
 				outputToFile,
+				false,
 				inputFolder,
 				outputFolder,
 				workload,

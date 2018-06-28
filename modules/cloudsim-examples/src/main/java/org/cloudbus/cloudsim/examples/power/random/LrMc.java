@@ -36,10 +36,12 @@ public class LrMc {
 		String vmAllocationPolicy = "lr"; // Local Regression (LR) VM allocation policy
 		String vmSelectionPolicy = "mc"; // Maximum Correlation (MC) VM selection policy
 		String parameter = "1.2"; // the safety parameter of the LR policy
+		boolean activeFirst = false;
 
 		new RandomRunner(
 				enableOutput,
 				outputToFile,
+				activeFirst,
 				inputFolder,
 				outputFolder,
 				workload,

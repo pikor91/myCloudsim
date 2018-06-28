@@ -27,29 +27,31 @@ public class PonaszkiRunner extends RunnerAbstract {
 
 	/**
 	 * Instantiates a new planet lab runner.
-	 *
-	 * @param enableOutput the enable output
+	 *  @param enableOutput the enable output
 	 * @param outputToFile the output to file
-	 * @param inputFolder the input folder
-	 * @param outputFolder the output folder
-	 * @param workload the workload
-	 * @param vmAllocationPolicy the vm allocation policy
-	 * @param vmSelectionPolicy the vm selection policy
-	 * @param parameter the parameter
-	 */
+     * @param activeFirst
+     * @param inputFolder the input folder
+     * @param outputFolder the output folder
+     * @param workload the workload
+     * @param vmAllocationPolicy the vm allocation policy
+     * @param vmSelectionPolicy the vm selection policy
+     * @param parameter the parameter
+     */
 	public PonaszkiRunner(
-			boolean enableOutput,
-			boolean outputToFile,
+            boolean enableOutput,
+            boolean outputToFile,
+            boolean activeFirst,
 			String inputFolder,
-			String outputFolder,
-			String workload,
-			String vmAllocationPolicy,
-			String vmSelectionPolicy,
-			String vmReallocationPolicy,
-			String parameter) {
+            String outputFolder,
+            String workload,
+            String vmAllocationPolicy,
+            String vmSelectionPolicy,
+            String vmReallocationPolicy,
+            String parameter) {
 		super(
 				enableOutput,
 				outputToFile,
+				activeFirst,
 				inputFolder,
 				outputFolder,
 				workload,

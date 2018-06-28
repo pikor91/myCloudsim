@@ -41,4 +41,5 @@ public final class Consts {
 
     // ================ enable host switching off =============
     public static final boolean ENABLE_HS = true;
+    public static final boolean ACTIVE_FIRST = true;
 }

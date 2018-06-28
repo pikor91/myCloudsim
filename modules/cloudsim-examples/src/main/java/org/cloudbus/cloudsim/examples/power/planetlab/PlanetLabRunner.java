@@ -38,6 +38,7 @@ public class PlanetLabRunner extends RunnerAbstract {
 	public PlanetLabRunner(
 			boolean enableOutput,
 			boolean outputToFile,
+			boolean activeFirst,
 			String inputFolder,
 			String outputFolder,
 			String workload,
@@ -47,7 +48,7 @@ public class PlanetLabRunner extends RunnerAbstract {
 		super(
 				enableOutput,
 				outputToFile,
-				inputFolder,
+                activeFirst, inputFolder,
 				outputFolder,
 				workload,
 				vmAllocationPolicy,

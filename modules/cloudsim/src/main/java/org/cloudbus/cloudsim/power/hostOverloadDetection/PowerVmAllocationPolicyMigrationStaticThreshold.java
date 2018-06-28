@@ -8,11 +8,12 @@
 
 package org.cloudbus.cloudsim.power.hostOverloadDetection;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.cloudbus.cloudsim.Host;
-import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
+import org.cloudbus.cloudsim.power.PowerHostStateAware;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
 
 /**
@@ -43,18 +44,19 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 	private HostOverUtilisationProcessor hostOverUtilisationProcessor;
 	/**
 	 * Instantiates a new PowerVmAllocationPolicyMigrationStaticThreshold.
-	 * 
-	 * @param hostList the host list
+	 *  @param hostList the host list
 	 * @param vmSelectionPolicy the vm selection policy
-	 * @param utilizationThreshold the utilization threshold
-	 */
+     * @param utilizationThreshold the utilization threshold
+     * @param activeFirst
+     */
 	public PowerVmAllocationPolicyMigrationStaticThreshold(
-			List<? extends Host> hostList,
-			PowerVmSelectionPolicy vmSelectionPolicy,
-			double utilizationThreshold) {
+            List<? extends Host> hostList,
+            PowerVmSelectionPolicy vmSelectionPolicy,
+            double utilizationThreshold, boolean activeFirst) {
 		super(hostList, vmSelectionPolicy);
 		setUtilizationThreshold(utilizationThreshold);
 		setHostOverUtilisationProcessor(new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
+		setAvtiveFirst(activeFirst);
 	}
 
 	/**
@@ -69,6 +71,27 @@ public class PowerVmAllocationPolicyMigrationStaticThreshold extends PowerVmAllo
 		return isHostOverUtilized;
 	}
 
+	public List<? extends Host> getActiveHosts(){
+		List<Host> result = new ArrayList<>();
+
+		for(PowerHostStateAware ph : this.<PowerHostStateAware>getHostList()){
+			if(ph.isActive()){
+				result.add(ph);
+			}
+		}
+		return result;
+	}
+
+	public List<? extends Host> getInactiveHosts(){
+		List<Host> result = new ArrayList<>();
+
+		for(PowerHostStateAware ph : this.<PowerHostStateAware>getHostList()){
+			if(ph.isInactive()){
+				result.add(ph);
+			}
+		}
+		return result;
+	}
 	/**
 	 * Sets the utilization threshold.
 	 * 

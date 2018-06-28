@@ -23,11 +23,12 @@ public class ThrMinuWpc {
 		String vmSelectionPolicy = "minu"; // Maximum Correlation (MC) VM selection policy
 		String vmReallocationPolicy = "wpc";
 		String parameter = "0.8"; // the static utilization threshold
+		boolean activeFirst = false;
 
 		new PonaszkiRunner(
 				enableOutput,
 				outputToFile,
-				inputFolder,
+                activeFirst, inputFolder,
 				outputFolder,
 				workload,
 				vmAllocationPolicy,

@@ -43,9 +43,9 @@ public abstract class RunnerAbstract {
 
 	/**
 	 * Run.
-	 * 
-	 * @param enableOutput the enable output
+	 *  @param enableOutput the enable output
 	 * @param outputToFile the output to file
+	 * @param activeFirst
 	 * @param inputFolder the input folder
 	 * @param outputFolder the output folder
 	 * @param workload the workload
@@ -56,6 +56,7 @@ public abstract class RunnerAbstract {
 	public RunnerAbstract(
 			boolean enableOutput,
 			boolean outputToFile,
+			boolean activeFirst,
 			String inputFolder,
 			String outputFolder,
 			String workload,
@@ -81,7 +82,8 @@ public abstract class RunnerAbstract {
 		start(
 				getExperimentName(workload, vmAllocationPolicy, vmSelectionPolicy,vmReallocationPolicy, parameter),
 				outputFolder,
-				getVmAllocationPolicy(vmAllocationPolicy, vmSelectionPolicy, vmReallocationPolicy, parameter));
+				getVmAllocationPolicy(vmAllocationPolicy, vmSelectionPolicy, vmReallocationPolicy, parameter, activeFirst),
+				activeFirst);
 	}
 
 	/**
@@ -139,7 +141,7 @@ public abstract class RunnerAbstract {
 	 * @param outputFolder the output folder
 	 * @param vmAllocationPolicy the vm allocation policy
 	 */
-	protected void start(String experimentName, String outputFolder, VmAllocationPolicy vmAllocationPolicy) {
+	protected void start(String experimentName, String outputFolder, VmAllocationPolicy vmAllocationPolicy, boolean activeFirst) {
 		System.out.println("Starting " + experimentName);
 
 		try {
@@ -168,7 +170,8 @@ public abstract class RunnerAbstract {
 					lastClock,
 					experimentName,
 					Constants.OUTPUT_CSV,
-					outputFolder);
+					outputFolder,
+					activeFirst);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -205,13 +208,15 @@ public abstract class RunnerAbstract {
 	 * @param vmAllocationPolicyName the vm allocation policy name
 	 * @param vmSelectionPolicyName the vm selection policy name
 	 * @param parameterName the parameter name
+	 * @param activeFirst
 	 * @return the vm allocation policy
 	 */
 	protected VmAllocationPolicy getVmAllocationPolicy(
 			String vmAllocationPolicyName,
 			String vmSelectionPolicyName,
 			String vmReallocationPolicyName,
-			String parameterName) {
+			String parameterName,
+			boolean activeFirst) {
 		VmAllocationPolicy vmAllocationPolicy = null;
 		PowerVmSelectionPolicy vmSelectionPolicy = null;
 		double utilizationThreshold = 0.7;
@@ -229,8 +234,8 @@ public abstract class RunnerAbstract {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					utilizationThreshold
-					);
+					utilizationThreshold,
+					activeFirst);
 			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorInterQuartileRange(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationInterQuartileRange(
 					hostList,
@@ -241,7 +246,7 @@ public abstract class RunnerAbstract {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					utilizationThreshold);
+					utilizationThreshold, activeFirst);
 			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorMedianAbsoluteDeviation(parameter, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationMedianAbsoluteDeviation(
@@ -254,7 +259,8 @@ public abstract class RunnerAbstract {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					utilizationThreshold);
+					utilizationThreshold,
+					activeFirst);
 			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegression(parameter, Constants.SCHEDULING_INTERVAL, new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationLocalRegression(
 					hostList,
@@ -267,7 +273,7 @@ public abstract class RunnerAbstract {
 			PowerVmAllocationPolicyMigrationAbstract fallbackVmSelectionPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 					hostList,
 					vmSelectionPolicy,
-					utilizationThreshold);
+					utilizationThreshold, activeFirst);
 			HostOverUtilisationProcessor hostOverUtilisationProcessor = new HostOverUtilisationProcessorLocalRegressionRobust(parameter, Constants.SCHEDULING_INTERVAL,  new HostOverUtilisationProcessorStaticThreshold(utilizationThreshold));
 			vmAllocationPolicy = new PowerVmAllocationPolicyMigrationLocalRegressionRobust(
 					hostList,
@@ -282,43 +288,51 @@ public abstract class RunnerAbstract {
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThreshold(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "stp".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyStripping(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "pck".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyPacking(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "rr".equals(vmReallocationPolicyName)){
 				Log.print("thr rr choosed");
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRoundRobin(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "lbCpuRatio".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyLoadBalancingCpuFreeRatio(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "wpc".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCore(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "cpc".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyCostPerCore(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else if(vmReallocationPolicyName!= null && "wpca".equals(vmReallocationPolicyName)){
 				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyWattsPerCoreAbsolute(
 						hostList,
 						vmSelectionPolicy,
-						parameter);
+						parameter,
+						activeFirst);
 			}else{
 				Log.printConcatLine("Choosed unknown host destination selection method", vmReallocationPolicyName);
 				System.exit(3);
