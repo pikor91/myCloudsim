@@ -103,7 +103,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 */
 	private LinkedList<Integer> activeHostsNumber = new LinkedList<>();
 
-	private LinkedList<Integer> transitionHostsNumber = new LinkedList<>();
+	private LinkedList<Integer> activeHostsNumberNew = new LinkedList<>();
 
 	private List<PowerHost> underUtilizedHostList;
 
@@ -225,12 +225,10 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	protected List<Map<String, Object>> getMigrationMapFromUnderUtilizedHosts(
 			List<PowerHostUtilizationHistory> overUtilizedHosts) {
 		List<Map<String, Object>> migrationMap = new LinkedList<Map<String, Object>>();
-		List<PowerHost> switchedOffHosts = getSwitchedOffHosts();
-		List<PowerHost> transitionHosts = getTransitionHosts();
+		List<PowerHost> switchedOffHosts = getSwitchedOffHostsOldWay();
 
-		activeHostsTime.add(CloudSim.clock());
-		activeHostsNumber.add(getHostList().size()-switchedOffHosts.size());
-		transitionHostsNumber.add(transitionHosts.size());
+
+		calcSwitchedOffHosts();
 
 		// over-utilized hosts + hosts that are selected to migrate VMs to from over-utilized hosts
 		Set<PowerHost> excludedHostsForFindingUnderUtilizedHost = new HashSet<PowerHost>();
@@ -285,6 +283,19 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		return migrationMap;
 	}
 
+	public void calcSwitchedOffHosts(){
+		List<PowerHost> switchedOffHosts = getSwitchedOffHostsOldWay();
+		List<PowerHost> switchedOffHostsNew = getSwitchedOffHostsNewWay();
+
+		activeHostsTime.add(CloudSim.clock());
+		int activeHostsOldWay = getHostList().size() - switchedOffHosts.size();
+		int activeHostsNewWay = getHostList().size()-switchedOffHostsNew.size();
+		activeHostsNumber.add(activeHostsOldWay);
+		activeHostsNumberNew.add(activeHostsNewWay);
+		if(activeHostsOldWay != activeHostsNewWay){
+			Log.printConcatLine("coś jest nie tak");
+		}
+	}
 	/**
 	 * Prints the over utilized hosts.
 	 * 
@@ -522,32 +533,33 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	 * 
 	 * @return the switched off hosts
 	 */
-	protected List<PowerHost> getSwitchedOffHosts() {
+	protected List<PowerHost> getSwitchedOffHostsOldWay() {
 		List<PowerHost> switchedOffHosts = new LinkedList<PowerHost>();
-		if(Consts.ENABLE_HS){
-			for (PowerHost host : this.<PowerHost> getHostList()) {
-				PowerHostStateAware h = (PowerHostStateAware) host;
-				if (host.getUtilizationOfCpu() == 0 /*&& h.isInactive()*/) {
-					if(h.isInactive()){
-//						Log.printConcatLine("Nieaktywny host z zero utylizacji");					switchedOffHosts.add(host);
-						switchedOffHosts.add(host);
-					}else{
-//						Log.printConcatLine("Aktywny host z zero utylizacji");
-					}
-				}
 
-			}
-		}else{
-			for (PowerHost host : this.<PowerHost> getHostList()) {
-				PowerHostStateAware h = (PowerHostStateAware) host;
-				if (host.getUtilizationOfCpu() == 0 ) {
-					switchedOffHosts.add(host);
-				}
+		for (PowerHost host : this.<PowerHost> getHostList()) {
+			PowerHostStateAware h = (PowerHostStateAware) host;
+			if (host.getUtilizationOfCpu() == 0 ) {
+				switchedOffHosts.add(host);
 			}
 		}
 		return switchedOffHosts;
 	}
 
+	protected List<PowerHost> getSwitchedOffHostsNewWay() {
+		List<PowerHost> switchedOffHosts = new LinkedList<PowerHost>();
+		for (PowerHost host : this.<PowerHost> getHostList()) {
+			PowerHostStateAware h = (PowerHostStateAware) host;
+			if (host.getUtilizationOfCpu() == 0 ) {
+				if(h.isInactive()){
+//						Log.printConcatLine("Nieaktywny host z zero utylizacji");
+					switchedOffHosts.add(host);
+				}else{
+//						Log.printConcatLine("Aktywny host z zero utylizacji");
+				}
+			}
+		}
+		return switchedOffHosts;
+	}
 	protected List<PowerHost> getTransitionHosts() {
 		List<PowerHost> transitionHosts = new LinkedList<PowerHost>();
 		if(Consts.ENABLE_HS){
@@ -902,7 +914,7 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 		return list;
 	}
 
-	public LinkedList<Integer> getTransitionHostsNumber() {
-		return transitionHostsNumber;
+	public LinkedList<Integer> getActiveHostsNumberNew() {
+		return activeHostsNumberNew;
 	}
 }

@@ -15,8 +15,8 @@ public class AllTests {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public static void main(String[] args) throws IOException {
-        boolean enableOutput = true;
-        boolean outputToFile = false;
+        boolean enableOutput = false;
+        boolean outputToFile = true;
         String inputFolder = NonPowerAware.class.getClassLoader().getResource("workload/planetlab").getPath();
         String outputFolder = "output";
         String workload = "20110303"; // PlanetLab workload
@@ -25,18 +25,34 @@ public class AllTests {
         String vmReallocationPolicy = "lbCpuRatio";
         String parameter = "0.8"; // the static utilization threshold
 
+        System.out.println("Vm selection policy cth");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "cth", workload, parameter);
-//        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "cuv", workload, parameter);
+
+        System.out.println("Vm selection policy cuv");
+        simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "cuv", workload, parameter);
+
+        System.out.println("Vm selection policy lvf");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "lvf", workload, parameter);
+
+        System.out.println("Vm selection policy maxu");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "maxu", workload, parameter);
+
+        System.out.println("Vm selection policy minu");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "minu", workload, parameter);
+
+        System.out.println("Vm selection policy mc");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "mc", workload, parameter);
+
+        System.out.println("Vm selection policy mmt");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "mmt", workload, parameter);
+
+        System.out.println("Vm selection policy rs");
         simulateOneSelection(enableOutput, outputToFile, inputFolder, outputFolder, vmAllocationPolicy, "rs", workload, parameter);
 
     }
 
     private static void simulateOneSelection(boolean enableOutput, boolean outputToFile, String inputFolder, String outputFolder, String allocationPolicy, String vmSelectionPolicy, String workload, String parameter) {
+        System.out.println("Destination host selection policy lbCpuRatio");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
@@ -45,6 +61,8 @@ public class AllTests {
                 workload,
                 allocationPolicy, vmSelectionPolicy, "lbCpuRatio",
                 parameter);
+
+        System.out.println("Destination host selection policy pck");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
@@ -53,6 +71,8 @@ public class AllTests {
                 workload,
                 allocationPolicy, vmSelectionPolicy, "pck",
                 parameter);
+
+        System.out.println("Destination host selection policy rr");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
@@ -61,6 +81,8 @@ public class AllTests {
                 workload,
                 allocationPolicy, vmSelectionPolicy, "rr",
                 parameter);
+
+        System.out.println("Destination host selection policy stp");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
@@ -69,6 +91,8 @@ public class AllTests {
                 workload,
                 allocationPolicy, vmSelectionPolicy, "stp",
                 parameter);
+
+        System.out.println("Destination host selection policy wpc");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
@@ -77,6 +101,8 @@ public class AllTests {
                 workload,
                 allocationPolicy, vmSelectionPolicy, "wpc",
                 parameter);
+
+        System.out.println("Destination host selection policy wpca");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,

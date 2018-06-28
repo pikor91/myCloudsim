@@ -33,8 +33,8 @@ public abstract class PowerModelSpecPowerHpProLiantMl110G4Xeon3040 extends Power
          * The power consumption according to the utilization percentage. 
          * @see #getPowerData(int) 
          */
-//	private final double[] power = { 86, 89.4, 92.6, 96, 99.5, 102, 106, 108, 112, 114, 117 };
-	private final double[] power = { 8.6, 8.94, 9.26, 9.6, 9.95, 10.2, 10.6, 10.8, 11.2, 11.4, 11.7 };
+	private final double[] power = { 86, 89.4, 92.6, 96, 99.5, 102, 106, 108, 112, 114, 117 };
+//	private final double[] power = { 8.6, 8.94, 9.26, 9.6, 9.95, 10.2, 10.6, 10.8, 11.2, 11.4, 11.7 };
 
 	@Override
 	protected double getPowerData(int index) {

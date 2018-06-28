@@ -629,16 +629,19 @@ public class Helper {
     private static void writeActiveHostNumber(PowerVmAllocationPolicyMigrationAbstract vmAllocationPolicy, String outputPath) {
 		LinkedList<Double> activeHostsTime = vmAllocationPolicy.getActiveHostsTime();
         LinkedList<Integer> activeHostsNumber = vmAllocationPolicy.getActiveHostsNumber();
-        LinkedList<Integer> transitionHostsNumber = vmAllocationPolicy.getTransitionHostsNumber();
+        LinkedList<Integer> activeHostsNumberNew = vmAllocationPolicy.getActiveHostsNumberNew();
         LinkedList<String> lines = new LinkedList<>();
+        LinkedList<String> linesNew = new LinkedList<>();
         double avg = 0;
         for(int i = 0; i < activeHostsTime.size(); i++){
-		    lines.add(String.format("%.2f;%d;%d\n", activeHostsTime.get(i), activeHostsNumber.get(i), transitionHostsNumber.get(i)));
+		    lines.add(String.format("%.2f;%d\n", activeHostsTime.get(i), activeHostsNumber.get(i)));
+		    linesNew.add(String.format("%.2f;%d\n", activeHostsTime.get(i), activeHostsNumberNew.get(i)));
 		    avg = avg + activeHostsNumber.get(i);
         }
         avg = avg / activeHostsNumber.size();
 		avg_num_of_active_hosts = avg;
         writeDataRows(lines, outputPath+".csv", "time;num_of_active_hosts\n");
+        writeDataRows(linesNew, outputPath+"_new.csv", "time;num_of_active_hosts_new\n");
 	}
 
 	private static void writeVmsStateHisotry(List<Vm> vms, String outputPath) {
@@ -1178,7 +1181,7 @@ public class Helper {
 		try {
 			writer = new BufferedWriter(new FileWriter(finalTable));
 			if(Constants.ENABLE_CSV_HEADERS){
-				writer.write("naswa testu; średnia utylizacja hosta (0-1);ilość migracji;zużycie mocy (MWh);liczba aktywnych hostów;czas migracji;slatah; pdm\n");
+				writer.write("nazwa testu; srednia utylizacja hosta (0-1);ilosc migracji;zuzycie mocy (MWh);liczba aktywnych hostow;czas migracji;slatah; pdm; mean vm selection; stDev vm selection ; mean destHost selection; stDev destHost selection\n");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -1187,29 +1190,56 @@ public class Helper {
 
 		File stats = new File(tablePath);
 		File[] files = stats.listFiles();
-
+		Map<String, String> rows = new HashMap<>();
+		Map<String, String> times = new HashMap<>();
 		for(File currentFile : files){
-				if(currentFile.getName().contains("statsTable")){
-					BufferedReader reader = null;
+			BufferedReader reader = null;
+			try {
+				reader = new BufferedReader(new FileReader(currentFile));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+				if(currentFile.getName().contains("statsTable")) {
+					String[] split = currentFile.getName().split("_");
+					String name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
+					String data = null;
 					try {
-						reader = new BufferedReader(new FileReader(currentFile));
-					} catch (FileNotFoundException e) {
+						data = reader.readLine();
+						data = reader.readLine();
+						rows.put(name, data);
+					} catch (IOException e) {
 						e.printStackTrace();
 					}
+				}else if(currentFile.getName().contains("_stats")){
 					String[] split = currentFile.getName().split("_");
-
 					String name = split[0]+"_"+split[2]+"_"+split[3]+"_"+split[4];
 					String data=null;
 					try {
 						data = reader.readLine();
-						data = reader.readLine();
-						reader.close();
-						writer.write(name+";"+data);
-						writer.newLine();
+						String[] stats1 = data.split(";");
+						String timesRow = stats1[16] +";"+stats1[17] +";"+ stats1[20] +";"+ stats1[21];
+
+						times.put(name, timesRow);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
+			try {
+				reader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		Set<String>experimentNames = rows.keySet();
+		TreeSet<String> sortedNames = new TreeSet<>(experimentNames);
+		for(String name : sortedNames){
+			String first = rows.get(name);
+			String second = times.get(name);
+			try {
+				writer.write(name+";" + first + ";" + second+"\n");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		try {
 			writer.close();

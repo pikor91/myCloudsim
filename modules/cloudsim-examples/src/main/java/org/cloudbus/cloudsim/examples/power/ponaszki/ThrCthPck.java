@@ -14,8 +14,8 @@ public class ThrCthPck {
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
 	public static void main(String[] args) throws IOException {
-		boolean enableOutput = true;
-		boolean outputToFile = false;
+		boolean enableOutput = false;
+		boolean outputToFile = true;
 		String inputFolder = NonPowerAware.class.getClassLoader().getResource("workload/planetlab").getPath();
 		String outputFolder = "output";
 		String workload = "20110303"; // PlanetLab workload

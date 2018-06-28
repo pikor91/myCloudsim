@@ -15,6 +15,7 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.core.predicates.PredicateType;
+import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
 
 /**
  * PowerDatacenter is a class that enables simulation of power-aware data centers.
@@ -92,17 +93,8 @@ public class PowerDatacenter extends Datacenter {
 
 			double minTime = updateCloudetProcessingWithoutSchedulingFutureEventsForce();
 
-//			checkHostsState();
-//			if(isEnableSwithcingHostsState()){
-//				todo wylaczanie nieaktywnych
-//				List<Host> inactiveList = findInactiveHosts(null);
-//				for(Host h : inactiveList){
-//					if(h.getId()==0){
-//						Log.printConcatLine("cotojest");
-//					}
-//					sendSwitchOff(h);
-//				}
-//			}
+			checkHostsState();
+
 			if (!isDisableMigrations()) {
 				List<Map<String, Object>> migrationMap = getVmAllocationPolicy().optimizeAllocation(
 						getVmList());
@@ -224,6 +216,7 @@ public class PowerDatacenter extends Datacenter {
 				hostsToSwitchOff.add(host);
 			}
 		}
+
 		//checking if any of hostsToSwitchOff is a destination host to migration
 
 		Set<Host> destinations = new HashSet<>();
@@ -273,6 +266,7 @@ public class PowerDatacenter extends Datacenter {
 		if(newHost == null){
 			throw new IllegalStateException("Cannot count delay time for migration, destination host is null");
 		}
+
 		PowerHostStateAware nh = (PowerHostStateAware) newHost;
 		double transferTime = vm.getRam() / ((double) nh.getBw() / (2 * 8000));
 		double delay = -1;
@@ -511,9 +505,9 @@ public class PowerDatacenter extends Datacenter {
 		}
 		boolean allocationSuccessfull = super.processVmMigrate(ev, ack);
 
-//		if(allocationSuccessfull && isEnableSwithcingHostsState()){
-//			sendSwitchOffIfVmIsEmpty(sourceHost, ev);
-//		}
+		if(allocationSuccessfull && isEnableSwithcingHostsState()){
+			sendSwitchOffIfVmIsEmpty(sourceHost, ev);
+		}
 		SimEvent event = CloudSim.findFirstDeferred(getId(), new PredicateType(CloudSimTags.VM_MIGRATE));
 		if (event == null || event.eventTime() > CloudSim.clock()) {
 			updateCloudetProcessingWithoutSchedulingFutureEventsForce();
