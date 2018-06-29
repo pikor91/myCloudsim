@@ -13,6 +13,7 @@ import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.power.PowerHost;
+import org.cloudbus.cloudsim.power.PowerHostStateAware;
 import org.cloudbus.cloudsim.power.PowerVmSelectionPolicy;
 
 import java.util.*;
@@ -72,28 +73,29 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRo
 	@Override
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
 		if(!isAvtiveFirst()){
-			PowerHost hostForVmAll = findHostForVmFromPassed(vm, getHostList(), excludedHosts);
+			PowerHost hostForVmAll = findHostForVmFromAll(vm, excludedHosts);
 			return hostForVmAll;
 		}else{
 			List<? extends Host> activeHosts = getActiveHosts();
-			PowerHost hostForVmActive = findHostForVmFromPassed(vm, activeHosts, excludedHosts);
+			PowerHost hostForVmActive = findHostForVmFromActive(vm, excludedHosts);
 			if(hostForVmActive==null){
 				List<? extends Host> inactiveHosts = getInactiveHosts();
-				hostForVmActive = findHostForVmFromPassed(vm, inactiveHosts, excludedHosts);
+				hostForVmActive = findHostForVmFromInactive(vm, excludedHosts);
 			}
 			return hostForVmActive;
 		}
 	}
 
-	public PowerHost findHostForVmFromPassed(Vm vm, List<? extends Host> destHosts, Set<? extends Host> excludedHosts) {
+	public PowerHost findHostForVmFromAll(Vm vm,  Set<? extends Host> excludedHosts) {
 
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
-		List<PowerHost> hostList = (List<PowerHost>) destHosts;
+		List<PowerHostStateAware> hostList = getHostList();
 
-		PowerHost host;
+		PowerHostStateAware host;
 		int count = 0;
 		while ((host = getNextHost()) != null) {
+
 			if(count>=hostList.size()){
 				break;
 			}
@@ -124,8 +126,91 @@ public class PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyRo
 		return allocatedHost;
 	}
 
-	private PowerHost getNextHost() {
-		return iterator.next();
+	public PowerHost findHostForVmFromActive(Vm vm,  Set<? extends Host> excludedHosts) {
+
+		double minPower = Double.MAX_VALUE;
+		PowerHost allocatedHost = null;
+		List<PowerHostStateAware> hostList = getHostList();
+
+		PowerHostStateAware host;
+		int count = 0;
+		while ((host = getNextHost()) != null) {
+
+			if(count>=hostList.size()){
+				break;
+			}
+			count++;
+			if(host.isInactive()){
+				continue;
+			}
+			if (excludedHosts.contains(host)) {
+				continue;
+			}
+			if (host.isSuitableForVm(vm)) {
+				if (getUtilizationOfCpuMips(host) != 0 && isHostOverUtilizedAfterAllocation(host, vm)) {
+					continue;
+				}
+
+				try {
+					double powerAfterAllocation = getPowerAfterAllocation(host, vm);
+					if (powerAfterAllocation != -1) {
+						double powerDiff = powerAfterAllocation - host.getPower();
+						allocatedHost = host;
+						break;
+					}
+				} catch (Exception e) {
+				}
+			}else{
+				Log.print("Host is not suitable for vm");
+			}
+
+		}
+		return allocatedHost;
+	}
+
+	public PowerHost findHostForVmFromInactive(Vm vm,  Set<? extends Host> excludedHosts) {
+
+		double minPower = Double.MAX_VALUE;
+		PowerHost allocatedHost = null;
+		List<PowerHostStateAware> hostList = getHostList();
+
+		PowerHostStateAware host;
+		int count = 0;
+		while ((host = getNextHost()) != null) {
+
+			if(count>=hostList.size()){
+				break;
+			}
+			count++;
+			if(host.isActive()){
+				continue;
+			}
+			if (excludedHosts.contains(host)) {
+				continue;
+			}
+			if (host.isSuitableForVm(vm)) {
+				if (getUtilizationOfCpuMips(host) != 0 && isHostOverUtilizedAfterAllocation(host, vm)) {
+					continue;
+				}
+
+				try {
+					double powerAfterAllocation = getPowerAfterAllocation(host, vm);
+					if (powerAfterAllocation != -1) {
+						double powerDiff = powerAfterAllocation - host.getPower();
+						allocatedHost = host;
+						break;
+					}
+				} catch (Exception e) {
+				}
+			}else{
+				Log.print("Host is not suitable for vm");
+			}
+
+		}
+		return allocatedHost;
+	}
+	private PowerHostStateAware getNextHost() {
+		return (PowerHostStateAware) iterator.next();
 	}
 
 
