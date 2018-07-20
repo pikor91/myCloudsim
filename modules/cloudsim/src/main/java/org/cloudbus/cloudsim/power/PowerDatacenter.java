@@ -79,6 +79,19 @@ public class PowerDatacenter extends Datacenter {
 	}
 
 	@Override
+	protected void processHostChangeStateStart(SimEvent ev, boolean ack) {
+		super.processHostChangeStateStart(ev, ack);
+		updateCloudetProcessingWithoutSchedulingFutureEventsForce();
+
+	}
+
+	@Override
+	protected void processHostChangeStateEnd(SimEvent ev, boolean ack) {
+		super.processHostChangeStateEnd(ev, ack);
+		updateCloudetProcessingWithoutSchedulingFutureEventsForce();
+	}
+
+	@Override
 	protected void updateCloudletProcessing() {
 		if (getCloudletSubmitted() == -1 || getCloudletSubmitted() == CloudSim.clock()) {
 			CloudSim.cancelAll(getId(), new PredicateType(CloudSimTags.VM_DATACENTER_EVENT));

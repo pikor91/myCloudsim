@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Created by ponaszki on 2018-05-21.
  */
-public class AllSelections {
+public class AllDestinationPolicies {
     /**
      * The main method.
      *
@@ -21,9 +21,10 @@ public class AllSelections {
         String outputFolder = "output";
         String workload = "20110303"; // PlanetLab workload
         String vmAllocationPolicy = "thr"; // Static Threshold (THR) VM allocation policy
-        String vmReallocationPolicy = "mu";
+        String vmSelectionPolicy = "mmt"; // Maximum Correlation (MC) VM selection policy
+        String vmReallocationPolicy = "rr";
         String parameter = "0.8"; // the static utilization threshold
-        boolean activeFirst = false;
+        boolean activeFirst = true;
 
         System.out.println("Vm Reallocation policy "+ vmReallocationPolicy);
         simulateOneDestination(enableOutput, outputToFile, activeFirst, inputFolder, outputFolder, vmAllocationPolicy, vmReallocationPolicy,  workload, parameter);

@@ -8,6 +8,7 @@
 
 package org.cloudbus.cloudsim.power;
 
+import org.cloudbus.cloudsim.HostStateHistoryEntry;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Pe;
 import org.cloudbus.cloudsim.VmScheduler;
@@ -80,6 +81,23 @@ public class PowerHostStateAware extends PowerHostUtilizationHistory {
 			Log.printConcatLine("Could not change currentState. Host already in transition");
 		}
 		return false;
+	}
+
+	@Override
+	public double updateVmsProcessing(double currentTime) {
+		double smallerTime = super.updateVmsProcessing(currentTime);
+		modifyLastHistoryEntry(currentTime, currentState, duringTransition);
+		return smallerTime;
+	}
+
+	private void modifyLastHistoryEntry(double currentTime, HostState currentState, boolean duringTransition) {
+		HostStateHistoryEntry hostStateHistoryEntry = getStateHistory().get(getStateHistory().size() - 1);
+		if(currentTime == hostStateHistoryEntry.getTime()) {
+			hostStateHistoryEntry.setHoststate(currentState);
+			hostStateHistoryEntry.setDuringTransition(duringTransition);
+		}else{
+			throw new IllegalStateException("Times not match during filling state history");
+		}
 	}
 
 	@Override

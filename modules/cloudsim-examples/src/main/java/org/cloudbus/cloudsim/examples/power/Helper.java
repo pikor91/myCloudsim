@@ -5,6 +5,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.*;
 
+import com.google.common.collect.Lists;
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.power.*;
 import org.cloudbus.cloudsim.power.hostOverloadDetection.PowerVmAllocationPolicyMigrationAbstract;
@@ -36,6 +37,7 @@ public class Helper {
 	static double avg_migration_time = 0.0;
 	static double slatah = 0.0;
 	static double pdm = 0.0;
+	static String DELIMITER = ",";
 	/**
 	 * Creates the vm list.
 	 * 
@@ -1171,9 +1173,45 @@ public class Helper {
 	}
 
 
-	public static void makeStatsTable(String outputFolder){
+	public static void makeStatsTable(String outputFolder) {
+		Map<String, Map<String, String>> dataMap = makeStatsData(outputFolder);
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_cth");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_cuv");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_lvf");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_minu");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_mc");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_mmt");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_maxu");
+		makeTablesForData(outputFolder, dataMap, "1_AF_thr_rs");
+		makeTablesForDataOneDes(outputFolder, dataMap, "pck", "dest_pck");
+		makeTablesForDataOneDes(outputFolder, dataMap, "mu", "dest_mu");
+		makeTablesForDataOneDes(outputFolder, dataMap, "wpc", "dest_wpc");
+		return;
+	}
+
+	private static void makeTablesForData(String outputFolder, Map<String, Map<String, String>> dataMap, String regex) {
+		Map<String, Map<String, String>> filteredMap = filterData(dataMap, regex, outputFolder);
+		saveInFiles(filteredMap, outputFolder, regex);
+	}
+
+	private static void makeTablesForDataOneDes(String outputFolder, Map<String, Map<String, String>> dataMap, String regex , String outputNameBegining) {
+		Map<String, Map<String, String>> filteredMap = filterData(dataMap, regex, outputFolder);
+		saveInFiles(filteredMap, outputFolder, outputNameBegining);
+	}
+
+	private static void saveInFiles(Map<String, Map<String, String>> filteredMap, String outputFolder, String beginingName) {
+		String[] destColumnsData = {"srednia utylizacja hosta (0-1)","ilosc migracji",
+				"zuzycie mocy (MWh)","liczba aktywnych hostow","sredni czas migracji","slatah",
+				"pdm"};
+		List<String> destColumnsDataList = Arrays.asList(destColumnsData);
+
+		String[] destColumnsTimes = {"mean vm selection","stDev vm selection","mean destHost selection",
+				"stDev destHost selection"};
+		List<String> destColumnsTimesList = Arrays.asList(destColumnsTimes);
+
 		String tablePath = outputFolder + "/stats/";
-		File finalTable = new File(tablePath +"final.csv");
+		File finalTable = new File(tablePath +beginingName+"_final.csv");
+		File finalTableTimes = new File(tablePath +beginingName+"_finalTimes.csv");
 		if (!finalTable.exists()){
 			try {
 				finalTable.createNewFile();
@@ -1181,21 +1219,99 @@ public class Helper {
 				e.printStackTrace();
 			}
 		}
+		if (!finalTableTimes.exists()){
+			try {
+				finalTableTimes.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		BufferedWriter writer = null;
+		BufferedWriter writerTimes = null;
 		try {
 			writer = new BufferedWriter(new FileWriter(finalTable));
+			writerTimes = new BufferedWriter(new FileWriter(finalTableTimes));
 			if(Constants.ENABLE_CSV_HEADERS){
-				writer.write("nazwa testu; srednia utylizacja hosta (0-1);ilosc migracji;zuzycie mocy (MWh);liczba aktywnych hostow;czas migracji;slatah; pdm; mean vm selection; stDev vm selection ; mean destHost selection; stDev destHost selection\n");
+				writer.write("nazwa testu, sr. utyl.,il. migr.,zuz. mocy,il. akt. h.,sr. cz. migr,slatah, pdm\n");
+				writerTimes.write("nazwa testu, sr. czas sel. vm, stDev czas sel. vm, sr czas sel. HD, stDev czas sel. HD\n");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
+		String begining = null;
+		try {
+			for(Map.Entry<String, Map<String, String>> entry : filteredMap.entrySet()){
+				String[] split = entry.getKey().split("_");
+				if(split.length==4){
+					begining = split[0]+"_"+split[2]+"_"+split[3]+"_";
+				}else{
+					begining = split[0]+"_"+split[1]+"_"+split[2]+"_"+split[3]+"_";
+				}
+
+				String lineData = makeLineData(destColumnsData, entry);
+				String lineTimes = makeLineTimes(destColumnsTimes, entry);
+				writer.write(lineData);
+				writerTimes.write(lineTimes);
+			}
+
+			writer.close();
+			writerTimes.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static String makeLineTimes(String[] destColumnsTimes, Map.Entry<String, Map<String, String>> entry) {
+		String name = entry.getKey();
+		Map<String, String> valuePairs = entry.getValue();
+		StringBuilder sb = new StringBuilder();
+		sb.append(name.replace("_", "-")).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsTimes[0])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsTimes[1])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsTimes[2])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsTimes[3])).append("\n");;
+		return sb.toString();
+	}
+
+	private static String makeLineData(String[] destColumnsData, Map.Entry<String, Map<String, String>> entry) {
+		String name = entry.getKey();
+		Map<String, String> valuePairs = entry.getValue();
+		StringBuilder sb = new StringBuilder();
+		sb.append(name.replace("_", "-")).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[0])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[1])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[2])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[3])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[4])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[5])).append(DELIMITER);
+		sb.append(valuePairs.get(destColumnsData[6])).append("\n");
+		return sb.toString();
+	}
+
+	private static Map<String, Map<String, String>> filterData(Map<String, Map<String, String>> dataMap, String regex, String outputFolder) {
+
+		Map<String, Map<String, String>> filteredMap = new TreeMap<>();
+		for(Map.Entry<String, Map<String, String>> entry : dataMap.entrySet()){
+			if(entry.getKey().contains(regex)){
+				filteredMap.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return filteredMap;
+	}
+
+	public static Map<String, Map<String, String>> makeStatsData(String outputFolder){
+		String tablePath = outputFolder + "/stats/";
+		String[] columns = {"nazwa testu", "srednia utylizacja hosta (0-1)","ilosc migracji",
+				"zuzycie mocy (MWh)","liczba aktywnych hostow","sredni czas migracji","slatah",
+				"pdm","mean vm selection","stDev vm selection","mean destHost selection",
+				"stDev destHost selection"};
+
 
 		File stats = new File(tablePath);
 		File[] files = stats.listFiles();
-		Map<String, String> rows = new HashMap<>();
-		Map<String, String> times = new HashMap<>();
+		Map<String, Map<String, String> > rows = new HashMap<>();
+		Map<String, Map<String, String> > times = new HashMap<>();
 		for(File currentFile : files){
 			BufferedReader reader = null;
 			try {
@@ -1211,7 +1327,8 @@ public class Helper {
 					try {
 						data = reader.readLine();
 						data = reader.readLine();
-						rows.put(name, data);
+						Map<String, String> dataRow = makeDataRowMap(data, columns);
+						rows.put(name, dataRow);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -1221,10 +1338,8 @@ public class Helper {
 					String data=null;
 					try {
 						data = reader.readLine();
-						String[] stats1 = data.split(";");
-						String timesRow = stats1[16] +";"+stats1[17] +";"+ stats1[20] +";"+ stats1[21];
-
-						times.put(name, timesRow);
+						Map<String, String> dataRow = makeTimeRowMap(data, columns);
+						times.put(name, dataRow);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -1235,22 +1350,68 @@ public class Helper {
 				e.printStackTrace();
 			}
 		}
+
 		Set<String>experimentNames = rows.keySet();
 		TreeSet<String> sortedNames = new TreeSet<>(experimentNames);
+		Map<String, Map<String, String>> finalData = new TreeMap<>();
 		for(String name : sortedNames){
-			String first = rows.get(name);
-			String second = times.get(name);
-			try {
-				writer.write(name+";" + first + ";" + second+"\n");
-			} catch (IOException e) {
-				e.printStackTrace();
+			Map<String, String> firstMap = rows.get(name);
+			Map<String, String> secondMap = times.get(name);
+			firstMap.putAll(secondMap);
+			finalData.put(name, firstMap);
+//			String nameReplaced = name.replace("_", "-");
+//			try {
+//				String finalRow = makeFinalRow(firstMap, secondMap, destColumnsData, nameReplaced);
+//				writer.write(finalRow);
+//				finalRow = makeFinalRow(firstMap, secondMap, destColumnsTimes, nameReplaced);
+//				writerTimes.write(finalRow);
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+		}
+//		try {
+//			writer.close();
+//			writerTimes.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		return finalData;
+	}
+
+	private static String makeFinalRow(Map<String, String> firstMap, Map<String, String> secondMap, String[] destColumns,   String name) {
+		firstMap.putAll(secondMap);
+		StringBuilder sb = new StringBuilder();
+		sb.append(name).append(DELIMITER);
+		for(int i = 0 ; i < destColumns.length ; i++){
+			if(i != destColumns.length-1){
+				sb.append(firstMap.get(destColumns[i]).replace(",",".")).append(DELIMITER);
+			}else{
+				sb.append(firstMap.get(destColumns[i]).replace(",",".")).append("\n");
 			}
 		}
-		try {
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+
+		return sb.toString();
+	}
+
+	private static Map<String, String> makeTimeRowMap(String data, String[] columns) {
+		Map<String, String> row = new HashMap<>();
+		String[] split = data.split(";");
+		row.put(columns[8], split[16].replace(",","."));
+		row.put(columns[9], split[17].replace(",","."));
+		row.put(columns[10], split[20].replace(",","."));
+		row.put(columns[11], split[21].replace(",","."));
+
+		return row;
+	}
+
+	private static Map<String, String> makeDataRowMap(String data, String[] columns) {
+		Map<String, String> row = new HashMap<>();
+		String[] split = data.split(";");
+		for(int i = 0; i< split.length;i++){
+
+			row.put(columns[i+1], split[i].replace(",","."));
 		}
+		return row;
 	}
 
 	private static String getName(String[] split) {

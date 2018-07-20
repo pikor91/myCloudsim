@@ -21,8 +21,6 @@ public class AllTests {
         String outputFolder = "output";
         String workload = "20110303"; // PlanetLab workload
         String vmAllocationPolicy = "thr"; // Static Threshold (THR) VM allocation policy
-        String vmSelectionPolicy = "mmt"; // Maximum Correlation (MC) VM selection policy
-        String vmReallocationPolicy = "lbCpuRatio";
         String parameter = "0.8"; // the static utilization threshold
         boolean activeFirst = true;
 
@@ -108,7 +106,7 @@ public class AllTests {
                 allocationPolicy, vmSelectionPolicy, "wpc",
                 parameter);
 
-        System.out.println("Destination host selection policy wpca");
+        System.out.println("Destination host selection policy mu");
         new PonaszkiRunner(
                 enableOutput,
                 outputToFile,
@@ -116,7 +114,7 @@ public class AllTests {
                 inputFolder,
                 outputFolder,
                 workload,
-                allocationPolicy, vmSelectionPolicy, "wpca",
+                allocationPolicy, vmSelectionPolicy, "mu",
                 parameter);
     }
 }

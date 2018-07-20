@@ -40,6 +40,6 @@ public final class Consts {
     public static final String VM = "vm";
 
     // ================ enable host switching off =============
-    public static final boolean ENABLE_HS = true;
+    public static final boolean ENABLE_HS = false;
     public static final boolean ACTIVE_FIRST = true;
 }

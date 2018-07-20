@@ -333,6 +333,12 @@ public abstract class RunnerAbstract {
 						vmSelectionPolicy,
 						parameter,
 						activeFirst);
+			}else if(vmReallocationPolicyName!= null && "mu".equals(vmReallocationPolicyName)){
+				vmAllocationPolicy = new PowerVmAllocationPolicyMigrationStaticThresholdReallocationPolicyMaximalUtilization(
+						hostList,
+						vmSelectionPolicy,
+						parameter,
+						activeFirst);
 			}else{
 				Log.printConcatLine("Choosed unknown host destination selection method", vmReallocationPolicyName);
 				System.exit(3);
