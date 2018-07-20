@@ -1,0 +1,7 @@
+nazwa testu, sr. czas sel. vm, stDev czas sel. vm, sr czas sel. HD, stDev czas sel. HD
+1-AF-thr-mmt-lbCpuRatio,0.00035,0.00055,0.03879,0.04696
+1-AF-thr-mmt-mu,0.00089,0.00555,0.02672,0.02790
+1-AF-thr-mmt-pck,0.00119,0.00828,0.02697,0.02877
+1-AF-thr-mmt-rr,0.00069,0.00053,0.00614,0.00394
+1-AF-thr-mmt-stp,0.00036,0.00049,0.05269,0.03285
+1-AF-thr-mmt-wpc,0.00036,0.00048,0.03032,0.03790
